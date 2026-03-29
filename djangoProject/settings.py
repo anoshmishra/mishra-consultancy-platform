@@ -1,34 +1,28 @@
 import os
 from pathlib import Path
+from django.contrib.auth import get_user_model
 
-# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security Settings
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "fallback-insecure-key-for-local-only"
-)
-
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-insecure-key-for-local-only")
 DEBUG = os.getenv("DEBUG", "False") == "True"
-
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
-# Application definition
+
 INSTALLED_APPS = [
-    'jazzmin',         # Ancient Modern UI Foundation (Must be at the top)
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cases',           # Core Business App
-    'widget_tweaks',   # For professional form UI
+    'cases',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', 
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -42,7 +36,7 @@ ROOT_URLCONF = 'djangoProject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], # Ensures root templates folder is seen
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -57,7 +51,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'djangoProject.wsgi.application'
 
-# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -65,7 +58,6 @@ DATABASES = {
     }
 }
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -73,35 +65,30 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Localization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-# --- STATIC & MEDIA FILES ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Media files (Profile Pictures, Case Documents)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- AUTHENTICATION REDIRECTS ---
 LOGIN_URL = 'cases:login'
 LOGIN_REDIRECT_URL = 'cases:home'
 LOGOUT_REDIRECT_URL = 'cases:home'
 
-# --- EMAIL CONFIGURATION (SMTP) ---
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'anoshmishra77@gmail.com'
-EMAIL_HOST_PASSWORD = 'gmbexgmjgdvpmlda' 
+EMAIL_HOST_PASSWORD = 'gmbexgmjgdvpmlda'
 DEFAULT_FROM_EMAIL = 'anoshmishra77@gmail.com'
 
 ADMINS = [
@@ -109,7 +96,6 @@ ADMINS = [
     ('Consultancy', 'mishraconsultancy96@gmail.com'),
 ]
 
-# --- ANCIENT MODERN UI CONFIGURATION (JAZZMIN) ---
 JAZZMIN_SETTINGS = {
     "site_title": "Mishra Consultancy",
     "site_header": "Mishra Consultancy",
@@ -159,7 +145,22 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
     "sidebar_nav_child_indent": True,
-    "sidebar_nav_compact_style": True,  # This cleans up the sidebar clutter
+    "sidebar_nav_compact_style": True,
     "sidebar_nav_legacy_style": False,
     "sidebar_nav_flat_style": True,
 }
+
+if os.getenv("RESET_ADMIN") == "True":
+    User = get_user_model()
+    User.objects.filter(username="admin").delete()
+    User.objects.filter(username="abinashmishra").delete()
+    User.objects.create_superuser(
+        username="admin",
+        email="anoshmishraa@gmail.com",
+        password="9777233158@Anosh"
+    )
+    User.objects.create_superuser(
+        username="abinashmishra",
+        email="mishraconsultancy96@gmail.com",
+        password="7008898676@Abinash"
+    )
