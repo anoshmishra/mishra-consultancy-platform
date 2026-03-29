@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from django.contrib.auth import get_user_model
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -87,9 +86,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'anoshmishra77@gmail.com'
-EMAIL_HOST_PASSWORD = 'gmbexgmjgdvpmlda'
-DEFAULT_FROM_EMAIL = 'anoshmishra77@gmail.com'
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "anoshmishra77@gmail.com")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "gmbexgmjgdvpmlda")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 ADMINS = [
     ('Anosh', 'anoshmishra77@gmail.com'),
@@ -149,18 +148,3 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_nav_legacy_style": False,
     "sidebar_nav_flat_style": True,
 }
-
-if os.getenv("RESET_ADMIN") == "True":
-    User = get_user_model()
-    User.objects.filter(username="admin").delete()
-    User.objects.filter(username="abinashmishra").delete()
-    User.objects.create_superuser(
-        username="admin",
-        email="anoshmishraa@gmail.com",
-        password="9777233158@Anosh"
-    )
-    User.objects.create_superuser(
-        username="abinashmishra",
-        email="mishraconsultancy96@gmail.com",
-        password="7008898676@Abinash"
-    )
