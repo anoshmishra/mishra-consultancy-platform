@@ -16,18 +16,20 @@ class Command(BaseCommand):
         admin2_email = os.getenv("ADMIN2_EMAIL")
         admin2_password = os.getenv("ADMIN2_PASSWORD")
 
-        if admin_username and not User.objects.filter(username=admin_username).exists():
-            User.objects.create_superuser(
-                username=admin_username,
-                email=admin_email,
-                password=admin_password
-            )
+        if admin_username and admin_email and admin_password:
+            if not User.objects.filter(username=admin_username).exists():
+                User.objects.create_superuser(
+                    username=admin_username,
+                    email=admin_email,
+                    password=admin_password
+                )
 
-        if admin2_username and not User.objects.filter(username=admin2_username).exists():
-            User.objects.create_superuser(
-                username=admin2_username,
-                email=admin2_email,
-                password=admin2_password
-            )
+        if admin2_username and admin2_email and admin2_password:
+            if not User.objects.filter(username=admin2_username).exists():
+                User.objects.create_superuser(
+                    username=admin2_username,
+                    email=admin2_email,
+                    password=admin2_password
+                )
 
         self.stdout.write(self.style.SUCCESS("Admins created successfully"))
