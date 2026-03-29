@@ -32,4 +32,4 @@ class Command(BaseCommand):
                     password=admin2_password
                 )
 
-        self.stdout.write(self.style.SUCCESS("Admins created successfully"))
+        self.stdout.write("Admins created successfully")
