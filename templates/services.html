@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="bg-dark text-white py-5 mb-5" style="background: linear-gradient(rgba(0,45,91,0.9), rgba(0,45,91,0.9)), url('{% static "images/legal-bg.jpg" %}') no-repeat center center; background-size: cover;">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold text-uppercase">Our Professional <span class="text-gold">Services</span></h1>
+        <p class="lead opacity-75">Expert Legal Solutions & Notary Services tailored to your needs.</p>
+    </div>
+</section>
+
+<div class="container mb-5">
+    <div class="row g-4">
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm service-card">
+                <div class="card-body p-4">
+                    <div class="icon-box mb-3 text-primary"><i class="fas fa-stamp fa-2x"></i></div>
+                    <h4 class="fw-bold">Notary Services</h4>
+                    <ul class="list-unstyled text-muted mb-4">
+                        <li><i class="fas fa-check me-2 text-primary"></i>Affidavit Preparation</li>
+                        <li><i class="fas fa-check me-2 text-primary"></i>Agreement Drafting</li>
+                        <li><i class="fas fa-check me-2 text-primary"></i>Power of Attorney (POA)</li>
+                        <li><i class="fas fa-check me-2 text-primary"></i>Oath & Declarations</li>
+                    </ul>
+                    <div class="alert alert-info py-2 small mb-3">
+                        <strong>Required:</strong> Original ID & Documents
+                    </div>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'cases:home' %}#contact" class="btn btn-primary w-100 fw-bold">Get Notarized Now</a>
+                    {% else %}
+                        <a href="{% url 'cases:register' %}" class="btn btn-primary w-100 fw-bold">Register to Start</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm service-card">
+                <div class="card-body p-4">
+                    <div class="icon-box mb-3 text-success"><i class="fas fa-scale-balanced fa-2x"></i></div>
+                    <h4 class="fw-bold">Litigation & Notices</h4>
+                    <ul class="list-unstyled text-muted mb-4">
+                        <li><i class="fas fa-check me-2 text-success"></i>Bail Matters (Anticipatory/Regular)</li>
+                        <li><i class="fas fa-check me-2 text-success"></i>Issue Official Legal Notices</li>
+                        <li><i class="fas fa-check me-2 text-success"></i>Civil and Criminal Matters</li>
+                        <li><i class="fas fa-check me-2 text-success"></i>Stay Orders & Injunctions</li>
+                    </ul>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'cases:home' %}#contact" class="btn btn-outline-success w-100 fw-bold">Case Evaluation</a>
+                    {% else %}
+                        <a href="{% url 'cases:register' %}" class="btn btn-outline-success w-100 fw-bold">Register to Start</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm service-card border-top border-danger border-4">
+                <div class="card-body p-4">
+                    <div class="icon-box mb-3 text-danger"><i class="fas fa-handcuffs fa-2x"></i></div>
+                    <h4 class="fw-bold">Criminal Defense</h4>
+                    <ul class="list-unstyled text-muted mb-4">
+                        <li><i class="fas fa-check me-2 text-danger"></i>Courtroom Representation</li>
+                        <li><i class="fas fa-check me-2 text-danger"></i>FIR Filing Assistance</li>
+                        <li><i class="fas fa-check me-2 text-danger"></i>Cybercrime & Fraud</li>
+                    </ul>
+                    <div class="badge bg-danger mb-3 p-2 w-100">Urgent Legal Help: 24/7</div>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'cases:home' %}#contact" class="btn btn-danger w-100 fw-bold">Upload Details</a>
+                    {% else %}
+                        <a href="{% url 'cases:register' %}" class="btn btn-danger w-100 fw-bold">Register to Start</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm service-card">
+                <div class="card-body p-4">
+                    <div class="icon-box mb-3 text-info"><i class="fas fa-users-rectangle fa-2x"></i></div>
+                    <h4 class="fw-bold">Family & Matrimonial</h4>
+                    <p class="small text-muted mb-4">Empathetic & confidential handling of divorce, custody, and marriage registration.</p>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'cases:home' %}#contact" class="btn btn-info text-white w-100 fw-bold">Book Consultation</a>
+                    {% else %}
+                        <a href="{% url 'cases:register' %}" class="btn btn-info text-white w-100 fw-bold">Register to Start</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm service-card">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-box mb-3 text-warning"><i class="fas fa-house-chimney-crack fa-2x"></i></div>
+                    <h4 class="fw-bold">Property & Real Estate</h4>
+                    <p class="text-muted small">Sale Deeds, Title Verification, and Registration.</p>
+                    <div class="trust-badge mb-3">
+                        <i class="fas fa-certificate text-warning"></i> Verification in 3-5 Days
+                    </div>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'cases:home' %}#contact" class="btn btn-outline-dark w-100">Verify Title</a>
+                    {% else %}
+                        <a href="{% url 'cases:register' %}" class="btn btn-outline-dark w-100">Register to Start</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm service-card bg-light">
+                <div class="card-body p-4">
+                    <div class="icon-box mb-3 text-primary"><i class="fas fa-file-signature fa-2x"></i></div>
+                    <h4 class="fw-bold">Licensing & Tenders</h4>
+                    <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                        <span>Contractor License</span>
+                        <span class="fw-bold text-primary">Registration</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                        <span>Tender Dropping</span>
+                        <span class="fw-bold text-primary">E-Bidding</span>
+                    </div>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'cases:home' %}#contact" class="btn btn-primary w-100 mt-2 fw-bold">Apply Now</a>
+                    {% else %}
+                        <a href="{% url 'cases:register' %}" class="btn btn-primary w-100 mt-2 fw-bold">Register to Start</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="p-5 bg-primary text-white text-center rounded-4 shadow">
+                <h2 class="fw-bold text-uppercase">Specialized Legal Consultancy</h2>
+                <p class="lead opacity-75">Expert guidance in Taxation (GST/IT Filing), RTI, and Strategic Contractor Support.</p>
+                <a href="{% url 'cases:home' %}#contact" class="btn btn-gold btn-lg mt-3 px-5">Speak to an Expert</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --accent-gold: #fccb00;
+        --primary-blue: #002d5b;
+    }
+    .text-gold { color: var(--accent-gold); }
+    .service-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 20px !important;
+    }
+    .service-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+    }
+    .icon-box { color: var(--primary-blue); }
+    .trust-badge {
+        font-size: 0.85rem;
+        background: #fff3cd;
+        color: #856404;
+        padding: 5px 15px;
+        border-radius: 50px;
+        display: inline-block;
+    }
+    .btn-gold {
+        background-color: var(--accent-gold);
+        color: var(--primary-blue);
+        border: none;
+        font-weight: 700;
+        transition: 0.3s;
+    }
+    .btn-gold:hover {
+        transform: scale(1.05);
+        background-color: #e5b800;
+        color: var(--primary-blue);
+    }
+    .bg-light { background-color: #f8f9fa !important; }
+</style>
+{% endblock %}

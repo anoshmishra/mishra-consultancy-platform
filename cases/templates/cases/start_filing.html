@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8 text-center">
+            <h2 class="fw-bold text-primary mb-3">NEW SERVICE REQUEST</h2>
+            <p class="text-muted lead">Select the legal or tax service you require. Once submitted, our team will review the request and update your dashboard.</p>
+            <div class="mx-auto bg-gold mb-4" style="height: 4px; width: 60px; border-radius: 2px;"></div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        
+        <div class="col-md-6">
+            <form method="POST" action="{% url 'cases:start_filing' %}" class="h-100">
+                {% csrf_token %}
+                <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-circle bg-success-subtle text-success mb-4 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 50%;">
+                            <i class="fas fa-file-invoice-dollar fa-2x"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">GST Compliance</h4>
+                        <p class="small text-muted mb-4">Registration, monthly/quarterly GSTR filings, and GST reconciliation services.</p>
+                        
+                        <div class="text-start mb-4">
+                            <label class="form-label small fw-bold text-uppercase text-muted">Select Sub-Service</label>
+                            <select name="sub_service" class="form-select border-0 bg-light py-2">
+                                <option value="New GST Registration">New GST Registration</option>
+                                <option value="Monthly GSTR Filing">Monthly GSTR Filing (GSTR-1/3B)</option>
+                                <option value="GST Annual Return">Annual Return (GSTR-9)</option>
+                                <option value="GST Cancellation">GST Cancellation/Surrender</option>
+                            </select>
+                            <input type="hidden" name="service_type" value="GST">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2 rounded-pill">
+                            Request This Job <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-6">
+            <form method="POST" action="{% url 'cases:start_filing' %}" class="h-100">
+                {% csrf_token %}
+                <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-circle bg-warning-subtle text-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 50%;">
+                            <i class="fas fa-calculator fa-2x"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Income Tax / ITR</h4>
+                        <p class="small text-muted mb-4">Personal ITR, Business Audits, TDS compliance, and Tax planning advisory.</p>
+                        
+                        <div class="text-start mb-4">
+                            <label class="form-label small fw-bold text-uppercase text-muted">Select Sub-Service</label>
+                            <select name="sub_service" class="form-select border-0 bg-light py-2">
+                                <option value="ITR-1/2 Filing">Individual ITR Filing</option>
+                                <option value="Business ITR-3/4">Business/Professional ITR</option>
+                                <option value="TDS Return">TDS Return Filing</option>
+                                <option value="Tax Planning">Tax Planning Consultation</option>
+                            </select>
+                            <input type="hidden" name="service_type" value="TAX">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2 rounded-pill">
+                            Request This Job <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-6">
+            <form method="POST" action="{% url 'cases:start_filing' %}" class="h-100">
+                {% csrf_token %}
+                <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-circle bg-primary-subtle text-primary mb-4 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 50%;">
+                            <i class="fas fa-gavel fa-2x"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Legal Documentation</h4>
+                        <p class="small text-muted mb-4">Drafting and vetting of legal contracts, notices, and commercial agreements.</p>
+                        
+                        <div class="text-start mb-4">
+                            <label class="form-label small fw-bold text-uppercase text-muted">Select Sub-Service</label>
+                            <select name="sub_service" class="form-select border-0 bg-light py-2">
+                                <option value="Rental Agreement">Rent / Lease Agreement</option>
+                                <option value="Partnership Deed">Partnership Deed Drafting</option>
+                                <option value="Legal Notice">Issuing Legal Notice</option>
+                                <option value="Sale Deed">Property Sale Deed</option>
+                            </select>
+                            <input type="hidden" name="service_type" value="LEGAL">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2 rounded-pill">
+                            Request This Job <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-md-6">
+            <form method="POST" action="{% url 'cases:start_filing' %}" class="h-100">
+                {% csrf_token %}
+                <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-circle bg-danger-subtle text-danger mb-4 mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 50%;">
+                            <i class="fas fa-stamp fa-2x"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">Notary & Affidavit</h4>
+                        <p class="small text-muted mb-4">Quick documentation for personal declarations, name changes, and gap certificates.</p>
+                        
+                        <div class="text-start mb-4">
+                            <label class="form-label small fw-bold text-uppercase text-muted">Select Sub-Service</label>
+                            <select name="sub_service" class="form-select border-0 bg-light py-2">
+                                <option value="General Affidavit">General Affidavit</option>
+                                <option value="Name Change">Name Change Gazette/Affidavit</option>
+                                <option value="Gap Certificate">Education Gap Certificate</option>
+                                <option value="Power of Attorney">Power of Attorney (POA)</option>
+                            </select>
+                            <input type="hidden" name="service_type" value="NOTARY">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2 rounded-pill">
+                            Request This Job <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .bg-gold { background-color: #fccb00; }
+    .transition-all { transition: all 0.3s ease; }
+    .hover-shadow:hover { 
+        transform: translateY(-10px); 
+        box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important; 
+    }
+    .icon-circle i { font-size: 1.5rem; }
+</style>
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-dark text-white rounded-4 shadow-lg position-relative overflow-hidden" 
+     style="background: linear-gradient(rgba(0,45,91,0.85), rgba(0,45,91,0.9)), url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1350&q=80') no-repeat center center; background-size: cover; min-height: 60vh; display: flex; align-items: center;">
+    <div class="container py-5 text-center position-relative" style="z-index: 2;">
+        <div class="badge bg-gold text-dark mb-3 px-3 py-2 fw-bold text-uppercase rounded-pill">Premier Legal & Licensing Firm Since 2020</div>
+        <h1 class="display-3 fw-bold mb-3 text-uppercase">Mishra <span class="text-gold">Consultancy</span></h1>
+        <p class="fs-4 mb-4 opacity-75 mx-auto" style="max-width: 800px;">Specialized in Taxation, E-Tendering, Contractor Licensing, and Expert Criminal Defense.</p>
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+            <a href="#contact" class="btn btn-gold btn-lg px-5 py-3 fw-bold shadow">Request Legal Service</a>
+            <a href="#tracker" class="btn btn-outline-light btn-lg px-5 py-3">Track Filing Progress</a>
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<div class="container" style="margin-top: -60px; position: relative; z-index: 10;">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card bg-primary text-white shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-body p-4 p-md-5">
+                    <div class="row align-items-center">
+                        <div class="col-sm-8 text-center text-sm-start border-sm-end">
+                            <h6 class="text-gold text-uppercase fw-bold ls-2 mb-1">Official Client Identity</h6>
+                            <h2 class="display-6 fw-bold mb-0" style="letter-spacing: 2px;">{{ user.profile.unique_id }}</h2>
+                            <p class="text-white-50 mt-2 mb-0">
+                                <i class="fas fa-user me-2"></i> {{ user.first_name }} {{ user.last_name }}
+                            </p>
+                        </div>
+                        <div class="col-sm-4 text-center mt-3 mt-sm-0">
+                            <div class="id-icon-circle mx-auto">
+                                <i class="fas fa-id-card fa-3x text-gold"></i>
+                            </div>
+                            <p class="small text-white-50 mt-2 mb-0">Verified Member</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gold" style="height: 5px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="container {% if user.is_authenticated %}mt-5{% endif %}">
+    
+    <div id="tracker" class="card border-0 shadow-lg mb-5 overflow-hidden rounded-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0"><i class="fas fa-search-location me-2"></i> Command Center: Live Status Tracker</h5>
+        </div>
+        <div class="card-body p-4 bg-light">
+            <form method="get" action="{% url 'cases:home' %}" class="row g-3 justify-content-center">
+                <div class="col-md-9">
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-id-card"></i></span>
+                        <input type="text" name="status_search" class="form-control border-start-0" 
+                               placeholder="Enter Unique Client ID (e.g. MC-2026-0001)" value="{{ request.GET.status_search }}">
+                        <button class="btn btn-primary px-4 fw-bold" type="submit">Track Status</button>
+                    </div>
+                </div>
+            </form>
+
+            {% if tracked_case %}
+            <div class="mt-5 p-4 bg-white rounded-4 border shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 text-dark">Subject: <span class="text-primary">{{ tracked_case.title }}</span></h5>
+                    <span class="badge bg-success p-2 px-3 fs-6">{{ tracked_case.get_status_display }}</span>
+                </div>
+                
+                <div class="progress mb-3" style="height: 30px; border-radius: 50px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                         role="progressbar" style="width: {{ tracked_case.progress_percentage }}%;">
+                         {{ tracked_case.progress_percentage }}% Complete
+                    </div>
+                </div>
+                
+                <div class="row text-center mt-2 small text-muted fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">
+                    <div class="col">Pending</div><div class="col">Received</div><div class="col">Processing</div><div class="col">Review</div><div class="col">Fulfilled</div>
+                </div>
+
+                {% if tracked_case.status == 'PENDING' %}
+                <div class="mt-4 p-4 rounded-4 text-center" style="background-color: #fff9e6; border: 1px dashed var(--accent-gold);">
+                    <i class="fas fa-file-invoice fa-3x text-gold mb-3"></i>
+                    <h5 class="fw-bold text-dark">Action Required: Upload Docs</h5>
+                    <p class="text-muted small">Please submit your Aadhaar, PAN, or Business License to initiate the process.</p>
+                    <a href="{% url 'cases:upload_document' tracked_case.id %}" class="btn btn-gold px-5 py-2 fw-bold shadow-sm">
+                        <i class="fas fa-cloud-upload-alt me-2"></i> SECURE UPLOAD
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="text-center mb-5">
+        <h6 class="text-primary fw-bold text-uppercase ls-2">Elite Specializations</h6>
+        <h2 class="display-5 fw-bold">Consultancy <span class="text-primary">& Advocacy</span></h2>
+        <div class="mx-auto bg-gold mt-2" style="height: 4px; width: 60px;"></div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm service-card p-4">
+                <div class="icon-circle bg-primary bg-opacity-10 mb-3 mx-auto"><i class="fas fa-file-contract fa-2x text-primary"></i></div>
+                <h4 class="fw-bold text-center">Contractor & Tenders</h4>
+                <ul class="list-unstyled mt-3 small text-muted">
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Contractor License Registration</li>
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> E-Tender Bidding & Dropping</li>
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Renewal of Licenses</li>
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Tender Documentation Support</li>
+                </ul>
+                <div class="mt-auto text-center">
+                    <span class="badge bg-primary-subtle text-primary border border-primary">Licensing Expert</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm service-card p-4">
+                <div class="icon-circle bg-success bg-opacity-10 mb-3 mx-auto"><i class="fas fa-stamp fa-2x text-success"></i></div>
+                <h4 class="fw-bold text-center">Notary Services</h4>
+                <ul class="list-unstyled mt-3 small text-muted">
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Affidavit Preparation</li>
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Agreement Drafting</li>
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Power of Attorney (POA)</li>
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Notary Verification</li>
+                </ul>
+                <div class="mt-auto text-center">
+                    <span class="badge bg-success-subtle text-success border border-success">24 Hour Service</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm service-card p-4">
+                <div class="icon-circle bg-danger bg-opacity-10 mb-3 mx-auto"><i class="fas fa-gavel fa-2x text-danger"></i></div>
+                <h4 class="fw-bold text-center">Legal Litigation</h4>
+                <ul class="list-unstyled mt-3 small text-muted">
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Bail Matters (Anticipatory/Regular)</li>
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Issuing Official Legal Notices</li>
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Criminal Defense & Trials</li>
+                    <li class="mb-2 text-start"><i class="fas fa-check text-gold me-2"></i> Civil Dispute Resolution</li>
+                </ul>
+                <div class="mt-auto text-center">
+                    <span class="badge bg-danger-subtle text-danger border border-danger">Expert Response</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contact" class="row py-5 align-items-center bg-white rounded-4 shadow-sm px-3 mx-1 mb-5 border">
+        <div class="col-lg-5 mb-4 mb-lg-0 px-md-5">
+            <h2 class="display-6 fw-bold">Contact Our <span class="text-primary">Strategists</span></h2>
+            <p class="text-muted">Briefly describe your legal or licensing requirement. Our specialized professionals will respond within 2 hours.</p>
+            <div class="mt-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;"><i class="fas fa-phone-alt"></i></div>
+                    <div class="ms-3"><strong>Direct Line:</strong><br><span class="text-primary fw-bold">+91 89844-54339</span></div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;"><i class="fab fa-whatsapp"></i></div>
+                    <div class="ms-3"><strong>Business WhatsApp:</strong><br><span class="text-success fw-bold">Live Consultation</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card shadow-lg p-4 border-0 rounded-4 bg-light">
+                <form method="post" action="{% url 'cases:home' %}">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Name / Representative</label>
+                            <input type="text" name="full_name" class="form-control p-3 border-0 shadow-sm" placeholder="Full Name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Contact Number</label>
+                            <input type="text" name="phone" class="form-control p-3 border-0 shadow-sm" placeholder="+91 XXXX-XXXXXX" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">Official Email</label>
+                            <input type="email" name="client_email" class="form-control p-3 border-0 shadow-sm" placeholder="email@domain.com" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">Service Required</label>
+                            <select name="subject" class="form-select p-3 border-0 shadow-sm">
+                                <option value="TAX">Taxation (GST / Income Tax)</option>
+                                <option value="LICENSE">Contractor License / E-Tenders</option>
+                                <option value="CRIMINAL">Criminal Law / Litigation</option>
+                                <option value="NOTARY">Notary / Legal Drafting</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold shadow-sm">Submit Secure Inquiry <i class="fas fa-paper-plane ms-2"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-blue: #002d5b;
+        --accent-gold: #fccb00;
+    }
+    .text-gold { color: var(--accent-gold); }
+    .bg-gold { background-color: var(--accent-gold); }
+    .ls-2 { letter-spacing: 2px; }
+    .service-card { transition: all 0.3s ease; border-radius: 20px !important; }
+    .service-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
+    .icon-circle { width: 65px; height: 65px; line-height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .form-control:focus, .form-select:focus { box-shadow: 0 0 0 0.25rem rgba(0, 45, 91, 0.1); border: 1px solid var(--primary-blue) !important; }
+    
+    .id-icon-circle {
+        width: 80px; height: 80px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid var(--accent-gold);
+        border-radius: 50%; display: flex;
+        align-items: center; justify-content: center;
+    }
+    .btn-gold {
+        background-color: var(--accent-gold);
+        color: var(--primary-blue);
+        border: none;
+    }
+    .btn-gold:hover {
+        background-color: #e5b800;
+        color: var(--primary-blue);
+    }
+    .border-sm-end { border-right: 1px solid rgba(255, 255, 255, 0.1); }
+    @media (max-width: 576px) { .border-sm-end { border-right: none; } }
+</style>
+{% endblock %}

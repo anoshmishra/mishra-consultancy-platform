@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="py-5 bg-white border-bottom">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h6 class="text-primary fw-bold text-uppercase ls-2">Legacy of Trust Since 2020</h6>
+                <h1 class="display-4 fw-bold mb-4">Integrity. Justice. <br><span class="text-primary">Mishra Consultancy.</span></h1>
+                <p class="lead text-muted">A family-led legal powerhouse providing specialized consultancy in Taxation, Licensing Infrastructure, and Aggressive Criminal Defense. We bridge the gap between complex government regulations and your peace of mind.</p>
+                <div class="row g-3 mt-4">
+                    <div class="col-6">
+                        <h4 class="fw-bold text-primary mb-0">500+</h4>
+                        <p class="small text-uppercase fw-bold text-muted">Successful Outcomes</p>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="fw-bold text-primary mb-0">100%</h4>
+                        <p class="small text-uppercase fw-bold text-muted">Confidentiality Rate</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mt-5 mt-lg-0 text-center">
+                <div class="position-relative px-3">
+                    <img src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80" alt="Mishra Consultancy Office" class="img-fluid rounded-4 shadow-lg">
+                    <div class="bg-gold p-3 rounded-3 position-absolute bottom-0 start-0 translate-middle-y ms-n3 shadow">
+                        <span class="fw-bold text-dark"><i class="fas fa-award me-2"></i>Mishra Family Legacy</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Our Legal <span class="text-primary">Professionals</span></h2>
+            <div class="mx-auto bg-gold mt-2" style="height: 4px; width: 60px;"></div>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm team-card h-100 overflow-hidden">
+                    <div class="team-img-wrapper">
+                        <img src="{% static 'images/photo1.jpg' %}" class="card-img-top" alt="Sanjeeb Kumar Mishra">
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <h4 class="fw-bold mb-1">Sanjeeb Kumar Mishra</h4>
+                        <p class="text-primary small fw-bold text-uppercase mb-3">Head of Notary & Licensing</p>
+                        <p class="small text-muted mb-3">Expert in Notary services such as Affidavit, Agreement and also services for Contractor license and E-tender bidding.</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <span class="badge bg-primary-subtle text-primary border border-primary">Notary Public</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary">E-Tender Expert</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm team-card h-100 overflow-hidden">
+                    <div class="team-img-wrapper">
+                        <img src="{% static 'images/photo2.jpg' %}" class="card-img-top" alt="Sanjay Kumar Mishra">
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <h4 class="fw-bold mb-1">Sanjay Kumar Mishra</h4>
+                        <p class="text-primary small fw-bold text-uppercase mb-3">Senior Advocate</p>
+                        <p class="small text-muted mb-3">Providing high-stakes legal counsel with a primary focus on Criminal Law litigation and courtroom defense strategy.</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <span class="badge bg-primary-subtle text-primary border border-primary">Criminal Law</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary">Advocate</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm team-card h-100 overflow-hidden">
+                    <div class="team-img-wrapper">
+                        <img src="{% static 'images/photo3.jpg' %}" class="card-img-top" alt="Abinash Mishra">
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <h4 class="fw-bold mb-1">Abinash Mishra</h4>
+                        <p class="text-primary small fw-bold text-uppercase mb-3">Expert Legal Consultant</p>
+                        <p class="small text-muted mb-3">Advocate specialized in Taxation (Income Tax & GST) and Criminal defense with precision and dedicated research.</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <span class="badge bg-primary-subtle text-primary border border-primary">Taxation</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary">Criminal Law</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<style>
+    :root {
+        --primary-blue: #002d5b;
+        --accent-gold: #fccb00;
+    }
+    .ls-2 { letter-spacing: 2px; }
+    .team-card { border-radius: 20px !important; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .team-card:hover { transform: translateY(-12px); box-shadow: 0 25px 50px rgba(0,45,91,0.15) !important; }
+    
+    .team-img-wrapper {
+        height: 380px;
+        overflow: hidden;
+        background-color: #eee;
+    }
+    .team-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+    .team-card:hover .team-img-wrapper img {
+        transform: scale(1.08);
+    }
+    .badge { padding: 8px 16px; border-radius: 50px; font-weight: 600; font-size: 0.75rem; }
+    .bg-primary-subtle { background-color: #e6f0ff !important; }
+    .bg-gold { background-color: var(--accent-gold); }
+</style>
+{% endblock %}

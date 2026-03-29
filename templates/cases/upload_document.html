@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white p-4 text-center">
+                    <i class="fas fa-file-shield fa-3x mb-3 text-gold"></i>
+                    <h3 class="fw-bold mb-0 text-uppercase">Secure Document Vault</h3>
+                    <p class="small opacity-75 mb-0 mt-2">Uploading for: <strong>{{ case.title }}</strong></p>
+                </div>
+
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <div class="alert alert-info border-0 small mb-4">
+                        <i class="fas fa-info-circle me-2"></i> 
+                        Please upload clear photos or PDF versions of your Aadhaar, PAN, or relevant legal papers.
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Select File (PDF, JPG, PNG)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-upload"></i></span>
+                                {{ form.document }}
+                            </div>
+                            {% if form.document.errors %}
+                                <div class="text-danger small mt-1">{{ form.document.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark">Notes for Adv. Mishra</label>
+                            {{ form.client_notes }}
+                            <div class="form-text mt-1">Briefly explain what this document is (e.g., "Aadhaar Card copy").</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm py-3">
+                                <i class="fas fa-cloud-upload-alt me-2"></i> SUBMIT TO CONSULTANCY
+                            </button>
+                            <a href="{% url 'cases:home' %}" class="btn btn-link text-muted text-decoration-none small">Cancel & Return</a>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card-footer bg-light border-0 py-3 text-center">
+                    <span class="text-muted small"><i class="fas fa-lock me-1"></i> End-to-End Encrypted Upload</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .text-gold { color: #fccb00; }
+    .form-control, .form-select, textarea {
+        border-radius: 10px !important;
+        border: 1px solid #dee2e6;
+        padding: 12px;
+    }
+    .form-control:focus {
+        border-color: #002d5b;
+        box-shadow: 0 0 0 0.25rem rgba(0, 45, 91, 0.1);
+    }
+    input[type="file"] {
+        padding: 8px;
+    }
+</style>
+{% endblock %}

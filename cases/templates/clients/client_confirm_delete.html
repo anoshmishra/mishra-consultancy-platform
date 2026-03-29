@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-danger text-white py-3">
+                    <h4 class="mb-0 text-center">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Confirm Deletion
+                    </h4>
+                </div>
+                
+                <div class="card-body p-4 text-center">
+                    <p class="text-muted mb-2">You are about to permanently delete the following client:</p>
+                    
+                    <div class="bg-light p-3 rounded mb-4 border">
+                        <h3 class="text-dark fw-bold mb-1">
+                            {{ object.first_name }} {{ object.last_name }}
+                        </h3>
+                        <p class="text-secondary mb-0">
+                            <i class="fas fa-envelope me-1"></i> {{ object.email }} | 
+                            <i class="fas fa-phone me-1"></i> {{ object.phone }}
+                        </p>
+                    </div>
+                    
+                    <div class="alert alert-warning text-start mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Important:</strong> Because we use <code>SET_NULL</code>, the case history for this client will be preserved, but it will no longer be linked to this specific name.
+                    </div>
+
+                    <form method="post" action="{% url 'cases:client_delete' object.pk %}">
+                        {% csrf_token %}
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-center">
+                            <button type="submit" class="btn btn-danger btn-lg px-5 shadow-sm">
+                                <i class="fas fa-trash-alt me-2"></i> Delete Client
+                            </button>
+                            
+                            <a href="{% url 'cases:client_list' %}" class="btn btn-outline-secondary btn-lg px-5">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card-footer bg-light text-center py-3">
+                    <small class="text-muted">This action cannot be undone from the dashboard.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card { transition: transform 0.2s; }
+    .btn-lg { font-size: 1.1rem; font-weight: 600; }
+    code { color: #d63384; font-weight: bold; }
+</style>
+{% endblock %}

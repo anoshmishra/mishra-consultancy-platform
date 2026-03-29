@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0 rounded-4 text-center">
+                <div class="card-body p-5">
+                    <div class="mb-4">
+                        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-sign-out-alt fa-2x text-muted"></i>
+                        </div>
+                        <h2 class="fw-bold">Signed Out</h2>
+                        <p class="text-muted">You have been successfully logged out of Mishra Consultancy Services.</p>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'cases:login' %}" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                            Login Again
+                        </a>
+                        <a href="{% url 'cases:home' %}" class="btn btn-outline-secondary btn-lg">
+                            Return to Homepage
+                        </a>
+                    </div>
+
+                    <p class="mt-4 small text-muted">
+                        Thank you for using our services. Have a great day!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

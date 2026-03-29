@@ -1,0 +1,65 @@
+/* --- CLEAN ANCIENT MODERN UI --- */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+    --gold: #c5a059;
+    --dark-bg: #1e1e1e;
+    --border-color: rgba(197, 160, 89, 0.15);
+}
+
+/* Typography: Modern Inter for data, Playfair for Headers */
+body {
+    font-family: 'Inter', sans-serif !important;
+    letter-spacing: -0.01em;
+}
+
+h1, h2, h3, .brand-text {
+    font-family: 'Playfair Display', serif !important;
+}
+
+/* Clean up the Sidebar */
+.main-sidebar {
+    elevation: 0 !important;
+    border-right: 1px solid var(--border-color) !important;
+}
+
+.nav-sidebar .nav-item {
+    margin-bottom: 5px;
+}
+
+/* Clean up the Tables (Ledger Style) */
+.card {
+    border: 1px solid var(--border-color) !important;
+    box-shadow: none !important;
+    border-radius: 4px !important;
+}
+
+.table thead th {
+    background-color: transparent !important;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--gold) !important;
+    border-top: none !important;
+    border-bottom: 2px solid var(--gold) !important;
+}
+
+.table td {
+    padding: 12px 15px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+/* Professional Status Pills */
+.badge {
+    padding: 5px 10px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+    border-radius: 2px !important;
+}
+
+/* Search Bar & Filter Optimization */
+.form-inline .form-control {
+    border-radius: 2px !important;
+    border: 1px solid var(--border-color) !important;
+}

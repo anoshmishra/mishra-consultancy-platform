@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden text-center">
+                <div class="bg-primary py-5">
+                    {% if user.profile.profile_pic %}
+                        <img src="{{ user.profile.profile_pic.url }}" class="rounded-circle border border-4 border-white shadow" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle border border-4 border-white shadow bg-light mx-auto d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                            <i class="fas fa-user fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-body pt-0" style="margin-top: -30px;">
+                    <div class="bg-white rounded-3 shadow-sm p-3 mb-3 border">
+                        <h4 class="fw-bold mb-0 text-dark">{{ user.get_full_name|default:user.username }}</h4>
+                        <span class="badge bg-gold text-dark fw-bold px-3 py-2 mt-2 rounded-pill">
+                            <i class="fas fa-id-badge me-1"></i> {{ user.profile.unique_id }}
+                        </span>
+                    </div>
+
+                    <div class="text-start px-3 mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-envelope text-primary me-3" style="width: 20px;"></i>
+                            <span class="small text-muted text-break">{{ user.email }}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-phone text-primary me-3" style="width: 20px;"></i>
+                            <span class="small text-muted">{{ user.profile.phone }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-venus-mars text-primary me-3" style="width: 20px;"></i>
+                            <span class="small text-muted">{{ user.profile.get_gender_display }}</span>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'cases:request_profile_edit' %}" class="btn btn-warning fw-bold py-2 shadow-sm border-0">
+                            <i class="fas fa-user-shield me-2"></i> Securely Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-header bg-white border-bottom p-4">
+                    <h5 class="fw-bold mb-0 text-primary">
+                        <i class="fas fa-concierge-bell me-2 text-warning"></i> Recent Service Requests
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="bg-light">
+                                <tr class="text-muted small text-uppercase ls-1">
+                                    <th class="ps-4 py-3">Service</th>
+                                    <th>Status</th>
+                                    <th class="pe-4 text-end">Charges</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sr in service_requests %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-dark">{{ sr.sub_service }}</div>
+                                        <small class="text-muted">{{ sr.get_service_type_display }}</small>
+                                    </td>
+                                    <td>
+                                        {% if sr.status == 'FULFILLED' %}
+                                            <span class="badge bg-success text-white px-3 rounded-pill">Completed</span>
+                                        {% elif sr.status == 'REQUESTED' %}
+                                            <span class="badge bg-secondary text-white px-3 rounded-pill">Awaiting Admin</span>
+                                        {% elif sr.status == 'REJECTED' %}
+                                            <span class="badge bg-danger text-white px-3 rounded-pill">Cancelled</span>
+                                        {% else %}
+                                            <span class="badge bg-primary text-white px-3 rounded-pill">{{ sr.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="pe-4 text-end fw-bold text-dark">
+                                        ₹ {{ sr.amount }}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted small">
+                                        No recent service requests found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-primary">
+                        <i class="fas fa-folder-open me-2 text-success"></i> My Active Filings
+                    </h5>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                        {{ user_cases.count }} Cases Found
+                    </span>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="bg-light">
+                                <tr class="text-muted small text-uppercase ls-1">
+                                    <th class="ps-4 py-3">Case Details</th>
+                                    <th>Status</th>
+                                    <th>Financials</th>
+                                    <th class="pe-4 text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for case in user_cases %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-dark mb-0">{{ case.title }}</div>
+                                        <small class="text-muted">Ref: #{{ case.id|stringformat:"04d" }}</small>
+                                    </td>
+                                    <td>
+                                        {% if case.status == 'COMPLETED' %}
+                                            <span class="badge bg-success-subtle text-success border border-success px-3 rounded-pill">Completed</span>
+                                        {% elif case.status == 'PENDING' %}
+                                            <span class="badge bg-warning-subtle text-warning border border-warning px-3 rounded-pill">Pending Docs</span>
+                                        {% else %}
+                                            <span class="badge bg-info-subtle text-info border border-info px-3 rounded-pill">{{ case.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if case.payment_status %}
+                                            <div class="text-success small fw-bold"><i class="fas fa-check-circle me-1"></i> Paid</div>
+                                        {% else %}
+                                            <div class="text-danger small fw-bold"><i class="fas fa-clock me-1"></i> ₹{{ case.amount_due }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        <a href="{% url 'cases:upload_document' case.id %}" class="btn btn-sm btn-outline-primary px-3 rounded-pill fw-bold">
+                                            <i class="fas fa-upload me-1"></i> Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="mb-3">
+                                            <i class="fas fa-briefcase fa-3x text-light"></i>
+                                        </div>
+                                        <h5 class="text-muted fw-bold">No Records Found</h5>
+                                        <p class="text-muted small">You don't have any legal filings currently being processed.</p>
+                                        
+                                        <a href="{% url 'cases:start_filing' %}" class="btn btn-primary px-4 py-2 fw-bold shadow">
+                                            <i class="fas fa-plus me-2"></i> Start a New Filing
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --accent-gold: #fccb00;
+        --primary-blue: #002d5b;
+    }
+    .bg-gold { background-color: var(--accent-gold); }
+    .ls-1 { letter-spacing: 1px; }
+    .table thead th { font-weight: 700; border: none; }
+    .card-header { background: #fdfdfd; }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 45, 91, 0.02);
+    }
+</style>
+{% endblock %}
