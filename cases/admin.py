@@ -234,6 +234,30 @@ class InquiryAdmin(admin.ModelAdmin):
         return mark_safe(f'<b style="color:{color.get(obj.status, "black")}; font-size:18px;">●</b>')
     status_color_indicator.short_description = "Visual Status"
 
+    def save_model(self, request, obj, form, change):
+        """Triggers emails when the Admin changes the status of an Inquiry."""
+        if change:
+            if obj.status == 'CONTACTED':
+                subject = f"Response from Mishra Consultancy: {obj.get_subject_display()}"
+                message = f"""
+                Hello {obj.full_name},
+
+                Thank you for reaching out to Mishra Consultancy regarding {obj.get_subject_display()}.
+
+                Our legal strategists have reviewed your inquiry. One of our team members will call you 
+                shortly at {obj.phone} to discuss the next steps.
+
+                Regards,
+                Admin Command Center
+                Mishra Consultancy Ltd.
+                """
+                try:
+                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [obj.email])
+                    self.message_user(request, f"Response email successfully sent to {obj.full_name}.", messages.SUCCESS)
+                except Exception as e:
+                    self.message_user(request, f"Email failed to send: {str(e)}", messages.ERROR)
+        super().save_model(request, obj, form, change)
+
     @admin.action(description="Convert selected inquiries into Clients")
     def convert_to_client(self, request, queryset):
         for inquiry in queryset:
@@ -298,7 +322,6 @@ class ClientAdmin(admin.ModelAdmin):
     linked_profile_id.short_description = "Sync Status"
 
 # --- 6. GLOBAL ADMIN BRANDING ---
-
 admin.site.site_header = "MISHRA CONSULTANCY CENTER"
 admin.site.site_title =  "ADMIN"
 admin.site.index_title = "SYSTEM INFRASTRUCTURE CONTROL PANEL"
