@@ -94,24 +94,26 @@ class Inquiry(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk:
-            old_status = Inquiry.objects.get(pk=self.pk).status
-            if old_status != self.status and self.status == 'CONTACTED':
+            previous_inquiry = Inquiry.objects.get(pk=self.pk)
+            if previous_inquiry.status != self.status and self.status == 'CONTACTED':
                 subject = f"Mishra Consultancy: Response to your {self.subject} inquiry"
                 message = f"""
-Hello {self.full_name},
+                Hello {self.full_name},
 
-Our legal team has reviewed your inquiry regarding {self.subject}.
-                
-A strategist will call you shortly at {self.phone} to discuss the next steps.
+                Thank you for reaching out to Mishra Consultancy regarding {self.subject}.
 
-Regards,
-Admin Command Center
-Mishra Consultancy Ltd.
+                Our legal strategists have reviewed your inquiry. One of our team members will call you 
+                shortly at {self.phone} to discuss the next steps.
+
+                Regards,
+                Admin Command Center
+                Mishra Consultancy Ltd.
                 """
                 try:
-                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [self.email], fail_silently=True)
-                except Exception:
-                    pass
+                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [self.email], fail_silently=False)
+                except Exception as e:
+                    print(f"SMTP ERROR for {self.email}: {str(e)}")
+        
         super(Inquiry, self).save(*args, **kwargs)
 
     def __str__(self):

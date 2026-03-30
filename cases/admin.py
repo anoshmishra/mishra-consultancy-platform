@@ -161,6 +161,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
     finance_status.short_description = "Payment Status"
 
     def request_badge(self, obj):
+        # COLORS UPDATED FOR FULL LIFECYCLE
         bg_colors = {
             'REQUESTED': '#ffc107',    
             'APPROVED': '#17a2b8',     
@@ -238,36 +239,18 @@ class InquiryAdmin(admin.ModelAdmin):
     status_color_indicator.short_description = "Visual Status"
 
     def save_model(self, request, obj, form, change):
-        """Triggers emails when the Admin changes the status of an Inquiry."""
-        if change:
-            if obj.status == 'CONTACTED':
-                subject = f"Response from Mishra Consultancy: {obj.subject}"
-                message = f"""
-                Hello {obj.full_name},
-
-                Thank you for reaching out to Mishra Consultancy regarding {obj.subject}.
-
-                Our legal strategists have reviewed your inquiry. One of our team members will call you 
-                shortly at {obj.phone} to discuss the next steps.
-
-                Regards,
-                Admin Command Center
-                Mishra Consultancy Ltd.
-                """
-                try:
-                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [obj.email])
-                    self.message_user(request, f"Response email successfully sent to {obj.full_name}.", messages.SUCCESS)
-                except Exception as e:
-                    self.message_user(request, f"Email failed to send: {str(e)}", messages.ERROR)
+        """Standard save trigger for individual edits or list edits."""
         super().save_model(request, obj, form, change)
 
     @admin.action(description="Convert selected inquiries into Clients")
     def convert_to_client(self, request, queryset):
+        count = 0
         for inquiry in queryset:
             if inquiry.status == 'CONVERTED' or User.objects.filter(email=inquiry.email).exists():
-                self.message_user(request, f"{inquiry.email} is already a user.", messages.WARNING)
+                self.message_user(request, f"{inquiry.email} skipped (already exists).", messages.WARNING)
                 continue
 
+            # 1. Generate unique user
             user = User.objects.create_user(
                 username=inquiry.email,
                 email=inquiry.email,
@@ -275,32 +258,38 @@ class InquiryAdmin(admin.ModelAdmin):
                 first_name=inquiry.full_name
             )
 
+            # 2. Create profile link
             UserProfile.objects.create(
                 user=user,
                 phone=inquiry.phone
             )
 
+            # 3. Finalize Inquiry status
             inquiry.status = 'CONVERTED'
             inquiry.save()
 
-            subject = "Account Created - Mishra Consultancy"
-            body = f"""
-            Hello {inquiry.full_name},
-
-            Welcome to Mishra Consultancy! We have converted your inquiry into a formal client account.
-
-            Your Credentials:
-            Username: {inquiry.email}
-            Temporary Password: {inquiry.phone}
-
-            Please login to your dashboard to track your filings.
-            """
+            # 4. DISPATCH WELCOME EMAIL (FORCED LOGIC)
+            subject = "Official Account Created - Mishra Consultancy"
+            body = (
+                f"Hello {inquiry.full_name},\n\n"
+                f"Your inquiry has been successfully converted into a formal legal account.\n\n"
+                f"ACCESS CREDENTIALS:\n"
+                f"Portal URL: https://mishra-consultancy-platform.onrender.com/login/\n"
+                f"Username: {inquiry.email}\n"
+                f"Temporary Password: {inquiry.phone}\n\n"
+                f"Please login to track your filings and service requests.\n\n"
+                f"Regards,\n"
+                f"Admin Command Center\n"
+                f"Mishra Consultancy Ltd."
+            )
             try:
-                send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [inquiry.email])
-            except Exception:
-                pass
+                send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [inquiry.email], fail_silently=False)
+                count += 1
+            except Exception as e:
+                self.message_user(request, f"SMTP ERROR for {inquiry.full_name}: {str(e)}", messages.ERROR)
 
-        self.message_user(request, "Selected inquiries converted successfully!", messages.SUCCESS)
+        if count > 0:
+            self.message_user(request, f"Successfully converted {count} inquiries and sent welcome emails.", messages.SUCCESS)
 
 @admin.register(Lawyer)
 class LawyerAdmin(admin.ModelAdmin):
