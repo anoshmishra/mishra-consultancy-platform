@@ -14,6 +14,9 @@ ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
     "https://mishra-consultancy-platform.onrender.com"
 ]
+
+# Essential for Render/Proxy environments to prevent CSRF 403 errors
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
@@ -88,8 +91,9 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# WhiteNoise Storage for Production Efficiency
+# Optimized for Production (Prevents Build Crashes on missing .map files)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+WHITENOISE_MANIFEST_STRICT = False
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -101,8 +105,7 @@ LOGIN_URL = 'cases:login'
 LOGIN_REDIRECT_URL = 'cases:home'
 LOGOUT_REDIRECT_URL = 'cases:home'
 
-# --- EMAIL CONFIGURATION (SMTP FIX) ---
-# Changed from console.EmailBackend to smtp.EmailBackend for live delivery
+# --- EMAIL CONFIGURATION (SMTP ENGINE) ---
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
