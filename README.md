@@ -45,7 +45,7 @@ Email: SMTP Integration (Gmail App Passwords for automated alerts)
 Bash
 ├── cases/
 │   ├── admin.py          # God-Mode & Bulk Actions
-│   ├── models.py         # ServiceRequest & Case Logic (285+ lines)
+│   ├── models.py         # ServiceRequest & Case Logic 
 │   ├── utils.py          # Professional PDF Generation Engine
 │   ├── views.py          # OTP Auth & Dual-Layer Dashboard Logic
 │   └── forms.py          # Secure Data Input Validation
