@@ -1,12 +1,11 @@
 import random
 import datetime
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html, mark_safe
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.core.mail import send_mail
 from django.conf import settings
-from django.contrib import messages
 from django.urls import reverse
 from .models import Client, Lawyer, Case, UserProfile, Inquiry, ServiceRequest
 
@@ -141,7 +140,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
         'request_badge', 
         'created_at'
     )
-    list_editable = ('status', 'amount') # Allows editing status AND amount in the list
+    list_editable = ('status', 'amount') 
     list_filter = ('status', 'service_type', 'is_paid', 'created_at')
     search_fields = ('client__unique_id', 'sub_service', 'client__user__first_name')
     readonly_fields = ('created_at',)
@@ -159,14 +158,13 @@ class ServiceRequestAdmin(admin.ModelAdmin):
     finance_status.short_description = "Payment Status"
 
     def request_badge(self, obj):
-        # COLORS UPDATED FOR FULL LIFECYCLE
         bg_colors = {
-            'REQUESTED': '#ffc107',    # Yellow
-            'APPROVED': '#17a2b8',     # Teal
-            'IN_PROGRESS': '#007bff',  # Blue
-            'VERIFICATION': '#6610f2', # Purple
-            'FULFILLED': '#28a745',    # Green
-            'REJECTED': '#dc3545',     # Red
+            'REQUESTED': '#ffc107',    
+            'APPROVED': '#17a2b8',     
+            'IN_PROGRESS': '#007bff',  
+            'VERIFICATION': '#6610f2', 
+            'FULFILLED': '#28a745',    
+            'REJECTED': '#dc3545',     
         }
         return mark_safe(f'<span style="background:{bg_colors.get(obj.status, "#666")}; color:white; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:bold;">Visual Status</span>')
     request_badge.short_description = "Label"
@@ -224,16 +222,58 @@ class CaseAdmin(admin.ModelAdmin):
 @admin.register(Inquiry)
 class InquiryAdmin(admin.ModelAdmin):
     """Lead Management Dashboard for Home Page Consultation requests."""
-    list_display = ('full_name', 'phone', 'subject', 'status', 'status_color_indicator', 'created_at')
+    list_display = ('full_name', 'email', 'phone', 'subject', 'status', 'status_color_indicator', 'created_at')
     list_editable = ('status',)
-    list_filter = ('status', 'created_at')
-    search_fields = ('full_name', 'phone', 'subject')
+    list_filter = ('status', 'subject', 'created_at')
+    search_fields = ('full_name', 'phone', 'subject', 'email')
     ordering = ('-created_at',)
-    
+    actions = ['convert_to_client']
+
     def status_color_indicator(self, obj):
         color = {"NEW": "blue", "CONTACTED": "orange", "CONVERTED": "green", "REJECTED": "red"}
         return mark_safe(f'<b style="color:{color.get(obj.status, "black")}; font-size:18px;">●</b>')
-    status_color_indicator.short_description = "Visual"
+    status_color_indicator.short_description = "Visual Status"
+
+    @admin.action(description="Convert selected inquiries into Clients")
+    def convert_to_client(self, request, queryset):
+        for inquiry in queryset:
+            if inquiry.status == 'CONVERTED' or User.objects.filter(email=inquiry.email).exists():
+                self.message_user(request, f"{inquiry.email} is already a user.", messages.WARNING)
+                continue
+
+            user = User.objects.create_user(
+                username=inquiry.email,
+                email=inquiry.email,
+                password=inquiry.phone, 
+                first_name=inquiry.full_name
+            )
+
+            UserProfile.objects.create(
+                user=user,
+                phone=inquiry.phone
+            )
+
+            inquiry.status = 'CONVERTED'
+            inquiry.save()
+
+            subject = "Account Created - Mishra Consultancy"
+            body = f"""
+            Hello {inquiry.full_name},
+
+            Welcome to Mishra Consultancy! We have converted your inquiry into a formal client account.
+
+            Your Credentials:
+            Username: {inquiry.email}
+            Temporary Password: {inquiry.phone}
+
+            Please login to your dashboard to track your filings.
+            """
+            try:
+                send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [inquiry.email])
+            except Exception:
+                pass
+
+        self.message_user(request, "Selected inquiries converted successfully!", messages.SUCCESS)
 
 @admin.register(Lawyer)
 class LawyerAdmin(admin.ModelAdmin):
