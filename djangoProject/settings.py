@@ -1,20 +1,23 @@
 import os
 from pathlib import Path
 
+# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback-insecure-key-for-local-only")
-DEBUG = True
+# Security Settings
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-&r^qatb7=!fk#yp88i3y^j_&^w3wee#k9u=hb^ake+^ywu9n0j")
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = ['*']
 
+# CSRF & Security for Production (Render)
 CSRF_TRUSTED_ORIGINS = [
     "https://mishra-consultancy-platform.onrender.com"
 ]
-
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
+# Application definition
 INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
@@ -58,6 +61,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'djangoProject.wsgi.application'
 
+# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -65,6 +69,7 @@ DATABASES = {
     }
 }
 
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -72,25 +77,33 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# Localization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
+# --- STATIC & MEDIA FILES ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# WhiteNoise Storage for Production Efficiency
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# --- AUTHENTICATION REDIRECTS ---
 LOGIN_URL = 'cases:login'
 LOGIN_REDIRECT_URL = 'cases:home'
 LOGOUT_REDIRECT_URL = 'cases:home'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# --- EMAIL CONFIGURATION (SMTP FIX) ---
+# Changed from console.EmailBackend to smtp.EmailBackend for live delivery
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -103,6 +116,7 @@ ADMINS = [
     ('Consultancy', 'mishraconsultancy96@gmail.com'),
 ]
 
+# --- JAZZMIN UI CONFIGURATION ---
 JAZZMIN_SETTINGS = {
     "site_title": "Mishra Consultancy",
     "site_header": "Mishra Consultancy",
