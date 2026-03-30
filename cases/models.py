@@ -92,6 +92,28 @@ class Inquiry(models.Model):
         verbose_name_plural = "Inquiries"
         ordering = ['-created_at']
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_status = Inquiry.objects.get(pk=self.pk).status
+            if old_status != self.status and self.status == 'CONTACTED':
+                subject = f"Mishra Consultancy: Response to your {self.subject} inquiry"
+                message = f"""
+Hello {self.full_name},
+
+Our legal team has reviewed your inquiry regarding {self.subject}.
+                
+A strategist will call you shortly at {self.phone} to discuss the next steps.
+
+Regards,
+Admin Command Center
+Mishra Consultancy Ltd.
+                """
+                try:
+                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [self.email], fail_silently=True)
+                except Exception:
+                    pass
+        super(Inquiry, self).save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.full_name} - {self.subject}"
 

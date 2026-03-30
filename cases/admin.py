@@ -158,6 +158,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
     finance_status.short_description = "Payment Status"
 
     def request_badge(self, obj):
+        # COLORS UPDATED FOR FULL LIFECYCLE
         bg_colors = {
             'REQUESTED': '#ffc107',    
             'APPROVED': '#17a2b8',     
@@ -238,11 +239,11 @@ class InquiryAdmin(admin.ModelAdmin):
         """Triggers emails when the Admin changes the status of an Inquiry."""
         if change:
             if obj.status == 'CONTACTED':
-                subject = f"Response from Mishra Consultancy: {obj.get_subject_display()}"
+                subject = f"Response from Mishra Consultancy: {obj.subject}"
                 message = f"""
                 Hello {obj.full_name},
 
-                Thank you for reaching out to Mishra Consultancy regarding {obj.get_subject_display()}.
+                Thank you for reaching out to Mishra Consultancy regarding {obj.subject}.
 
                 Our legal strategists have reviewed your inquiry. One of our team members will call you 
                 shortly at {obj.phone} to discuss the next steps.
@@ -309,6 +310,7 @@ class LawyerAdmin(admin.ModelAdmin):
         return f"Adv. {obj.first_name} {obj.last_name}"
     full_name_display.short_description = "Legal Professional"
 
+@admin.register(Lawyer)
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
     """Manual Record Keeping for Legacy Clients."""
@@ -322,6 +324,7 @@ class ClientAdmin(admin.ModelAdmin):
     linked_profile_id.short_description = "Sync Status"
 
 # --- 6. GLOBAL ADMIN BRANDING ---
+
 admin.site.site_header = "MISHRA CONSULTANCY CENTER"
 admin.site.site_title =  "ADMIN"
 admin.site.index_title = "SYSTEM INFRASTRUCTURE CONTROL PANEL"
