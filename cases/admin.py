@@ -147,8 +147,11 @@ class ServiceRequestAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
 
     def client_control_link(self, obj):
-        url = reverse('admin:auth_user_change', args=[obj.client.user.id])
-        return format_html('<a href="{}" style="font-weight:bold; color:#002d5b;">{}</a>', url, obj.client.unique_id)
+        try:
+            url = reverse('admin:auth_user_change', args=[obj.client.user.id])
+            return format_html('<a href="{}" style="font-weight:bold; color:#002d5b;">{}</a>', url, obj.client.unique_id)
+        except:
+            return obj.client.unique_id if obj.client else "N/A"
     client_control_link.short_description = "Client Profile"
 
     def finance_status(self, obj):
@@ -158,7 +161,6 @@ class ServiceRequestAdmin(admin.ModelAdmin):
     finance_status.short_description = "Payment Status"
 
     def request_badge(self, obj):
-        # COLORS UPDATED FOR FULL LIFECYCLE
         bg_colors = {
             'REQUESTED': '#ffc107',    
             'APPROVED': '#17a2b8',     
@@ -310,7 +312,6 @@ class LawyerAdmin(admin.ModelAdmin):
         return f"Adv. {obj.first_name} {obj.last_name}"
     full_name_display.short_description = "Legal Professional"
 
-@admin.register(Lawyer)
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
     """Manual Record Keeping for Legacy Clients."""
