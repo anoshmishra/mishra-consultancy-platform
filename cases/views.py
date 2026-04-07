@@ -1,5 +1,6 @@
 import random
 import datetime
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
@@ -18,7 +19,7 @@ from .forms import (
     DocumentUploadForm, UserUpdateForm, ProfileUpdateForm
 )
 
-# --- 1. PUBLIC PAGES ---
+logger = logging.getLogger(__name__)
 
 def services_view(request):
     return render(request, 'services.html')
@@ -55,7 +56,7 @@ class HomeView(TemplateView):
                 email=client_email, subject=service_subject
             )
         except Exception as e:
-            print(f"Database Save Error: {e}")
+            logger.error(f"Inquiry Database Error: {e}")
 
         email_body = f"New Inquiry from {full_name}\nPhone: {phone}\nEmail: {client_email}\nSubject: {service_subject}"
 
@@ -68,12 +69,11 @@ class HomeView(TemplateView):
                 fail_silently=False,
             )
             messages.success(request, f"Thank you {full_name}! Inquiry received.")
-        except Exception:
+        except Exception as e:
+            logger.error(f"SMTP Timeout/Error: {e}")
             messages.success(request, f"Thank you {full_name}! Your request is registered.")
 
         return redirect("cases:home")
-
-# --- 2. AUTHENTICATION ---
 
 def register_view(request):
     if request.method == "POST":
@@ -105,7 +105,10 @@ def register_view(request):
             messages.info(request, "OTP sent! Please check your email.")
             return redirect("cases:verify_otp")
         except Exception as e:
-            messages.error(request, f"Error sending verification email: {str(e)}")
+            logger.error(f"Registration SMTP Error: {e}")
+            request.session['verification_email'] = email
+            messages.warning(request, "Registration successful, but email service timed out. Please try verifying later.")
+            return redirect("cases:verify_otp")
             
     return render(request, "registration/register.html")
 
@@ -126,13 +129,17 @@ def verify_otp_view(request):
             user.save()
             
             welcome_msg = f"Hello {user.first_name},\n\nWelcome! Your Private Client ID is: {profile.unique_id}"
-            send_mail(
-                "Welcome to Mishra Consultancy",
-                welcome_msg,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=False,
-            )
+            try:
+                send_mail(
+                    "Welcome to Mishra Consultancy",
+                    welcome_msg,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+
             messages.success(request, "Account verified! Please login.")
             return redirect("cases:login")
         except UserProfile.DoesNotExist:
@@ -160,21 +167,16 @@ def logout_view(request):
     auth_logout(request)
     return redirect("cases:home")
 
-# --- 3. CLIENT PORTAL ---
-
 @login_required
 def profile_view(request):
-    # Fetch formal cases (Filings)
     user_cases = Case.objects.filter(client_profile=request.user.profile).order_by('-created_at')
-    
-    # Fetch raw service requests (Ongoing requests/Pending approval)
     service_requests = ServiceRequest.objects.filter(client=request.user.profile).order_by('-created_at')
-    
     context = {
         'user_cases': user_cases,
         'service_requests': service_requests,
     }
     return render(request, 'registration/profile.html', context)
+
 @login_required
 def upload_document_view(request, case_id):
     case = get_object_or_404(Case, id=case_id, client_profile=request.user.profile)
@@ -217,17 +219,17 @@ def start_filing_view(request):
         return redirect('cases:profile')
     return render(request, 'cases/start_filing.html')
 
-# --- 4. SECURE PROFILE EDITING ---
-
 @login_required
 def request_profile_edit(request):
     profile = request.user.profile
     otp = profile.generate_otp()
     try:
-        send_mail("Profile Change Code", f"Code: {otp}", settings.DEFAULT_FROM_EMAIL, [request.user.email])
+        send_mail("Profile Change Code", f"Code: {otp}", settings.DEFAULT_FROM_EMAIL, [request.user.email], fail_silently=False)
         messages.info(request, "Code sent to current email.")
         return redirect('cases:verify_edit_otp')
-    except Exception:
+    except Exception as e:
+        logger.error(f"Edit OTP SMTP Error: {e}")
+        messages.error(request, "Mail server is busy. Could not send code.")
         return redirect('cases:profile')
 
 @login_required
@@ -258,8 +260,6 @@ def profile_edit_final(request):
         u_form = UserUpdateForm(instance=request.user)
         p_form = ProfileUpdateForm(instance=request.user.profile)
     return render(request, 'registration/profile_edit_form.html', {'u_form': u_form, 'p_form': p_form})
-
-# --- 5. STAFF VIEWS ---
 
 class ClientListView(LoginRequiredMixin, ListView):
     model = Client
