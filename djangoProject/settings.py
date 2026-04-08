@@ -6,7 +6,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-&r^qatb7=!fk#yp88i3y^j_&^w3wee#k9u=hb^ake+^ywu9n0j")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ['*']
+# Updated ALLOWED_HOSTS to prevent Render Health Check loops
+ALLOWED_HOSTS = [
+    'mishra-consultancy-platform.onrender.com', 
+    '.onrender.com', 
+    'localhost', 
+    '127.0.0.1'
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://mishra-consultancy-platform.onrender.com"
@@ -94,6 +100,7 @@ LOGIN_URL = 'cases:login'
 LOGIN_REDIRECT_URL = 'cases:home'
 LOGOUT_REDIRECT_URL = 'cases:home'
 
+# SMTP Configuration - Infrastructure-X Ready
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
