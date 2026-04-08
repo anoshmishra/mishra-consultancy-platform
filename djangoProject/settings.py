@@ -6,21 +6,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-&r^qatb7=!fk#yp88i3y^j_&^w3wee#k9u=hb^ake+^ywu9n0j")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# Updated ALLOWED_HOSTS to prevent Render Health Check loops
-ALLOWED_HOSTS = [
-    'mishra-consultancy-platform.onrender.com', 
-    '.onrender.com', 
-    'localhost', 
-    '127.0.0.1'
-]
+# Changed to '*' temporarily to ensure Render's Health Check bot (Render/1.0) 
+# can verify the site without being blocked by Host filtering.
+ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     "https://mishra-consultancy-platform.onrender.com"
 ]
 
+# Render handles SSL at the load balancer level. 
+# We keep the header but ensure we aren't forcing a loop.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
+
+# IMPORTANT: If Render is still looping, ensure SECURE_SSL_REDIRECT is NOT True in your env
+SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
 
 INSTALLED_APPS = [
     'jazzmin',
@@ -88,7 +89,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# Optimized for Render performance
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False
 
 MEDIA_URL = '/media/'
