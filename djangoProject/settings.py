@@ -96,12 +96,12 @@ LOGOUT_REDIRECT_URL = 'cases:home'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 2525))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "False") == "True"
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "True") == "True"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
 EMAIL_TIMEOUT = 10
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "anoshmishra77@gmail.com")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "gmbexgmjgdvpmlda")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "oncoswqmexpshkck")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 ADMINS = [
