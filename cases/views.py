@@ -1,6 +1,7 @@
 import random
 import datetime
 import logging
+import time
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
@@ -20,6 +21,61 @@ from .forms import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def build_registration_otp_message(otp):
+    return (
+        "Dear User,\n\n"
+        "Welcome to Mishra Consultancy.\n"
+        "Use the One-Time Password (OTP) below to verify your account:\n\n"
+        f"OTP: {otp}\n\n"
+        "This OTP is confidential. Please do not share it with anyone.\n\n"
+        "If you did not initiate this request, you can safely ignore this email.\n\n"
+        "Regards,\n"
+        "Mishra Consultancy Team"
+    )
+
+
+def send_mail_with_retry(subject, message, recipient_list, fail_silently=False):
+    retries = max(1, int(getattr(settings, "EMAIL_SEND_RETRIES", 3)))
+    retry_delay = float(getattr(settings, "EMAIL_RETRY_DELAY_SECONDS", 2))
+    last_error = None
+
+    for attempt in range(1, retries + 1):
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=recipient_list,
+                fail_silently=fail_silently,
+            )
+            return True
+        except Exception as e:
+            last_error = e
+            logger.warning(
+                "SMTP attempt %s/%s failed for subject '%s': %s",
+                attempt,
+                retries,
+                subject,
+                e,
+            )
+            if attempt < retries:
+                time.sleep(retry_delay * attempt)
+
+    if last_error and not fail_silently:
+        raise last_error
+    return False
+
+
+def queue_mail_or_fallback(subject, message, recipient_list, fail_silently=False):
+    try:
+        from .tasks import send_email_task
+        send_email_task.delay(subject, message, recipient_list, fail_silently)
+        return True
+    except Exception as e:
+        logger.warning("Celery enqueue failed. Falling back to sync mail: %s", e)
+        return send_mail_with_retry(subject, message, recipient_list, fail_silently=fail_silently)
 
 def services_view(request):
     return render(request, 'services.html')
@@ -61,10 +117,9 @@ class HomeView(TemplateView):
         email_body = f"New Inquiry from {full_name}\nPhone: {phone}\nEmail: {client_email}\nSubject: {service_subject}"
 
         try:
-            send_mail(
+            queue_mail_or_fallback(
                 subject=f"NEW INQUIRY: {service_subject}",
                 message=email_body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[settings.DEFAULT_FROM_EMAIL, 'anoshmishra77@gmail.com'],
                 fail_silently=False,
             )
@@ -94,10 +149,9 @@ def register_view(request):
         otp = profile.generate_otp()
         
         try:
-            send_mail(
+            queue_mail_or_fallback(
                 "Verification Code - Mishra Consultancy",
-                f"Your OTP for Mishra Consultancy registration is: {otp}",
-                settings.DEFAULT_FROM_EMAIL,
+                build_registration_otp_message(otp),
                 [email],
                 fail_silently=False,
             )
@@ -130,10 +184,9 @@ def verify_otp_view(request):
             
             welcome_msg = f"Hello {user.first_name},\n\nWelcome! Your Private Client ID is: {profile.unique_id}"
             try:
-                send_mail(
+                queue_mail_or_fallback(
                     "Welcome to Mishra Consultancy",
                     welcome_msg,
-                    settings.DEFAULT_FROM_EMAIL,
                     [email],
                     fail_silently=True,
                 )
@@ -146,6 +199,34 @@ def verify_otp_view(request):
             messages.error(request, "Invalid OTP.")
 
     return render(request, "registration/verify.html")
+
+
+def resend_otp_view(request):
+    email = request.session.get("verification_email")
+    if not email:
+        messages.error(request, "Verification session expired. Please register again.")
+        return redirect("cases:register")
+
+    try:
+        profile = UserProfile.objects.get(user__username=email)
+    except UserProfile.DoesNotExist:
+        messages.error(request, "Account not found. Please register again.")
+        return redirect("cases:register")
+
+    otp = profile.generate_otp()
+    try:
+        queue_mail_or_fallback(
+            "Verification Code - Mishra Consultancy",
+            build_registration_otp_message(otp),
+            [email],
+            fail_silently=False,
+        )
+        messages.info(request, "A new OTP has been sent to your email.")
+    except Exception as e:
+        logger.error("Resend OTP SMTP Error: %s", e)
+        messages.warning(request, "Email service is busy. Please try resend after a minute.")
+
+    return redirect("cases:verify_otp")
 
 def login_view(request):
     if request.method == "POST":
@@ -206,10 +287,9 @@ def start_filing_view(request):
 
         admin_msg = f"New Request\nClient: {request.user.get_full_name()}\nID: {request.user.profile.unique_id}\nService: {service_type}\nSub: {sub_service}"
         try:
-            send_mail(
+            queue_mail_or_fallback(
                 f"Job Request: {request.user.profile.unique_id}",
                 admin_msg,
-                settings.DEFAULT_FROM_EMAIL,
                 [settings.DEFAULT_FROM_EMAIL, 'anoshmishra77@gmail.com'],
                 fail_silently=False,
             )
@@ -224,7 +304,7 @@ def request_profile_edit(request):
     profile = request.user.profile
     otp = profile.generate_otp()
     try:
-        send_mail("Profile Change Code", f"Code: {otp}", settings.DEFAULT_FROM_EMAIL, [request.user.email], fail_silently=False)
+        queue_mail_or_fallback("Profile Change Code", f"Code: {otp}", [request.user.email], fail_silently=False)
         messages.info(request, "Code sent to current email.")
         return redirect('cases:verify_edit_otp')
     except Exception as e:

@@ -51,7 +51,7 @@
                         <p class="small text-muted mb-0">Didn't receive the code?</p>
                         <a href="{% url 'cases:register' %}" class="text-decoration-none small fw-bold">Try another email</a> 
                         <span class="mx-2 text-muted">|</span>
-                        <a href="javascript:location.reload();" class="text-decoration-none small fw-bold">Resend OTP</a>
+                        <a href="{% url 'cases:resend_otp' %}" class="text-decoration-none small fw-bold">Resend OTP</a>
                     </div>
                 </div>
             </div>
