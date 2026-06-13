@@ -15,6 +15,9 @@ redis==5.0.8
 reportlab==4.2.5
 pypng==0.20220715.0
 
+# --- Email Service (SendGrid) ---
+sendgrid==6.11.0
+
 # --- Database & Connectors ---
 dj-database-url==2.3.0
 psycopg2-binary==2.9.10

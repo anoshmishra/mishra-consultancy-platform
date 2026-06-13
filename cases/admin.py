@@ -4,10 +4,10 @@ from django.contrib import admin, messages
 from django.utils.html import format_html, mark_safe
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
 from .models import Client, Lawyer, Case, UserProfile, Inquiry, ServiceRequest
+from .sendgrid_backend import send_sendgrid_email_with_retry
 
 # --- 1. GLOBAL EMERGENCY & BULK ACTIONS ---
 
@@ -26,7 +26,7 @@ def activate_accounts(modeladmin, request, queryset):
 @admin.action(description="📧 Send Payment Request & Invoice Alert")
 def send_payment_email(modeladmin, request, queryset):
     """
-    Loops through selected cases and sends an automated email regarding pending payments.
+    Loops through selected cases and sends an automated email via SendGrid regarding pending payments.
     """
     count = 0
     for case in queryset:
@@ -44,11 +44,10 @@ def send_payment_email(modeladmin, request, queryset):
                     f"Regards,\nAdmin Command Center\nMishra Consultancy"
                 )
                 try:
-                    send_mail(
-                        subject, 
-                        message, 
-                        settings.DEFAULT_FROM_EMAIL, 
-                        [recipient_email], 
+                    send_sendgrid_email_with_retry(
+                        subject=subject,
+                        message=message,
+                        recipient_list=[recipient_email],
                         fail_silently=False
                     )
                     count += 1
@@ -58,7 +57,7 @@ def send_payment_email(modeladmin, request, queryset):
                 messages.warning(request, f"Skipped {recipient_name} - No email found.")
         else:
             messages.warning(request, f"Skipped case '{case.title}' - No linked profile.")
-    messages.success(request, f"System successfully sent {count} automated payment alerts.")
+    messages.success(request, f"System successfully sent {count} automated payment alerts via SendGrid.")
 
 # --- 2. ADVANCED IDENTITY CONTROL (USER & PROFILE GOD-MODE) ---
 

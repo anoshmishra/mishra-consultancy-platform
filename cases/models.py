@@ -2,9 +2,10 @@ import random
 import datetime
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.mail import send_mail, EmailMessage
+from django.core.mail import EmailMessage
 from django.conf import settings
 from .utils import generate_service_pdf
+from .sendgrid_backend import send_sendgrid_email_with_retry
 
 class UserProfile(models.Model):
     GENDER_CHOICES = (
@@ -110,9 +111,14 @@ class Inquiry(models.Model):
                 Mishra Consultancy Ltd.
                 """
                 try:
-                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [self.email], fail_silently=False)
+                    send_sendgrid_email_with_retry(
+                        subject=subject,
+                        message=message,
+                        recipient_list=[self.email],
+                        fail_silently=False
+                    )
                 except Exception as e:
-                    print(f"SMTP ERROR for {self.email}: {str(e)}")
+                    print(f"SendGrid ERROR for {self.email}: {str(e)}")
         
         super(Inquiry, self).save(*args, **kwargs)
 
@@ -146,6 +152,7 @@ class ServiceRequest(models.Model):
     is_paid = models.BooleanField(default=False)
 
     def trigger_receipt_automation(self):
+        """Generate and send PDF receipt via SendGrid"""
         try:
             pdf_io = generate_service_pdf(self, status="COMPLETED")
             subject = f"OFFICIAL RECEIPT: {self.sub_service} - Mishra Consultancy"
@@ -156,17 +163,21 @@ class ServiceRequest(models.Model):
                 f"Please find your official computer-generated receipt attached to this email.\n\n"
                 f"Regards,\nAdmin Command Center\nMishra Consultancy"
             )
-            email = EmailMessage(
-                subject, 
-                body, 
-                settings.DEFAULT_FROM_EMAIL, 
-                [self.client.user.email]
+            
+            # Create attachment tuple for SendGrid
+            pdf_content = pdf_io.getvalue()
+            attachment = (f"Receipt_{self.id}.pdf", pdf_content, "application/pdf")
+            
+            send_sendgrid_email_with_retry(
+                subject=subject,
+                message=body,
+                recipient_list=[self.client.user.email],
+                fail_silently=False,
+                attachments=[attachment]
             )
-            email.attach(f"Receipt_{self.id}.pdf", pdf_io.getvalue(), "application/pdf")
-            email.send()
-            print("SUCCESS: Receipt Email Sent!") 
+            print("SUCCESS: SendGrid Receipt Email Sent!") 
         except Exception as e:
-            print(f"CRITICAL ERROR: {str(e)}")
+            print(f"CRITICAL ERROR in SendGrid receipt: {str(e)}")
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -185,7 +196,12 @@ class ServiceRequest(models.Model):
                     f"Regards,\nMishra Consultancy Admin"
                 )
                 try:
-                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [self.client.user.email], fail_silently=True)
+                    send_sendgrid_email_with_retry(
+                        subject=subject,
+                        message=message,
+                        recipient_list=[self.client.user.email],
+                        fail_silently=True
+                    )
                 except Exception:
                     pass
         super(ServiceRequest, self).save(*args, **kwargs)
@@ -227,7 +243,12 @@ class Case(models.Model):
                     f"Regards,\nMishra Consultancy"
                 )
                 try:
-                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [self.client_profile.user.email], fail_silently=True)
+                    send_sendgrid_email_with_retry(
+                        subject=subject,
+                        message=message,
+                        recipient_list=[self.client_profile.user.email],
+                        fail_silently=True
+                    )
                 except Exception:
                     pass
         super(Case, self).save(*args, **kwargs)

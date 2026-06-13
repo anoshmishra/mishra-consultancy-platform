@@ -7,7 +7,6 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, T
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
-from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.models import User
@@ -19,6 +18,7 @@ from .forms import (
     ClientForm, LawyerForm, CaseForm, 
     DocumentUploadForm, UserUpdateForm, ProfileUpdateForm
 )
+from .sendgrid_backend import send_sendgrid_email_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -37,45 +37,49 @@ def build_registration_otp_message(otp):
 
 
 def send_mail_with_retry(subject, message, recipient_list, fail_silently=False):
-    retries = max(1, int(getattr(settings, "EMAIL_SEND_RETRIES", 3)))
-    retry_delay = float(getattr(settings, "EMAIL_RETRY_DELAY_SECONDS", 2))
-    last_error = None
-
-    for attempt in range(1, retries + 1):
-        try:
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=recipient_list,
-                fail_silently=fail_silently,
-            )
-            return True
-        except Exception as e:
-            last_error = e
-            logger.warning(
-                "SMTP attempt %s/%s failed for subject '%s': %s",
-                attempt,
-                retries,
-                subject,
-                e,
-            )
-            if attempt < retries:
-                time.sleep(retry_delay * attempt)
-
-    if last_error and not fail_silently:
-        raise last_error
-    return False
+    """
+    Send email via SendGrid with built-in retry logic
+    Returns True on success, False otherwise
+    """
+    return send_sendgrid_email_with_retry(
+        subject=subject,
+        message=message,
+        recipient_list=recipient_list,
+        fail_silently=fail_silently,
+        max_retries=int(getattr(settings, "EMAIL_SEND_RETRIES", 3))
+    )
 
 
-def queue_mail_or_fallback(subject, message, recipient_list, fail_silently=False):
+def queue_mail_or_fallback(subject, message, recipient_list, fail_silently=False,
+                          html_message=None, from_email=None, attachments=None):
+    """
+    Queue email via Celery, with sync fallback if queue fails
+    SendGrid handles all delivery
+    """
     try:
         from .tasks import send_email_task
-        send_email_task.delay(subject, message, recipient_list, fail_silently)
+        send_email_task.delay(
+            subject=subject,
+            message=message,
+            recipient_list=recipient_list,
+            fail_silently=fail_silently,
+            html_message=html_message,
+            from_email=from_email,
+            attachments=attachments
+        )
+        logger.info(f"Email queued via Celery: {subject}")
         return True
     except Exception as e:
-        logger.warning("Celery enqueue failed. Falling back to sync mail: %s", e)
-        return send_mail_with_retry(subject, message, recipient_list, fail_silently=fail_silently)
+        logger.warning(f"Celery enqueue failed for '{subject}'. Falling back to sync SendGrid: {e}")
+        return send_sendgrid_email_with_retry(
+            subject=subject,
+            message=message,
+            recipient_list=recipient_list,
+            fail_silently=fail_silently,
+            html_message=html_message,
+            from_email=from_email,
+            attachments=attachments
+        )
 
 def services_view(request):
     return render(request, 'services.html')
