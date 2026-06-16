@@ -56,8 +56,9 @@ Bash
  Impact
 By digitizing the manual "Consultancy-to-Client" pipeline, this system reduces operational overhead by 40% and eliminates manual billing errors through automated PDF reconciliation.
 
-SMTP Environment Variables (Production)
-- Set these on Render (or your host) to avoid OTP mail timeouts and auth failures:
+OTP Email Variables (Production)
+- Set either `SENDGRID_API_KEY` or the SMTP variables below on Render. Without one of these providers, OTP email cannot be delivered.
+- `SENDGRID_API_KEY=your-sendgrid-api-key`
 - `EMAIL_HOST=smtp.gmail.com`
 - `EMAIL_PORT=587`
 - `EMAIL_USE_TLS=True`

@@ -6,6 +6,7 @@ import logging
 import json
 from typing import List, Optional, Dict, Any
 from django.conf import settings
+from django.core.mail.backends.smtp import EmailBackend as SMTPEmailBackend
 from django.core.mail.backends.base import BaseEmailBackend
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import (
@@ -15,6 +16,14 @@ from sendgrid.helpers.mail import (
 import base64
 
 logger = logging.getLogger(__name__)
+
+
+def smtp_is_configured() -> bool:
+    return all([
+        getattr(settings, 'EMAIL_HOST', ''),
+        getattr(settings, 'EMAIL_HOST_USER', ''),
+        getattr(settings, 'EMAIL_HOST_PASSWORD', ''),
+    ])
 
 
 class SendGridEmailBackend(BaseEmailBackend):
@@ -248,8 +257,23 @@ def send_sendgrid_email(subject: str, message: str, recipient_list: List[str],
         if extra_headers:
             email_msg.extra_headers = extra_headers
         
-        # Send using SendGrid backend
-        backend = SendGridEmailBackend(fail_silently=fail_silently)
+        if getattr(settings, 'SENDGRID_API_KEY', ''):
+            backend = SendGridEmailBackend(fail_silently=fail_silently)
+        elif smtp_is_configured():
+            logger.warning("SENDGRID_API_KEY not configured. Sending email via SMTP fallback.")
+            backend = SMTPEmailBackend(
+                host=settings.EMAIL_HOST,
+                port=settings.EMAIL_PORT,
+                username=settings.EMAIL_HOST_USER,
+                password=settings.EMAIL_HOST_PASSWORD,
+                use_tls=settings.EMAIL_USE_TLS,
+                use_ssl=settings.EMAIL_USE_SSL,
+                timeout=settings.EMAIL_TIMEOUT,
+                fail_silently=fail_silently,
+            )
+        else:
+            raise ValueError("No email provider configured. Set SENDGRID_API_KEY or SMTP EMAIL_HOST/EMAIL_HOST_USER/EMAIL_HOST_PASSWORD.")
+
         result = backend.send_messages([email_msg])
         
         return result > 0

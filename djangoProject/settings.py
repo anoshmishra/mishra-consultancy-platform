@@ -101,18 +101,26 @@ LOGIN_URL = 'cases:login'
 LOGIN_REDIRECT_URL = 'cases:home'
 LOGOUT_REDIRECT_URL = 'cases:home'
 
-# --- EMAIL CONFIGURATION (SendGrid) ---
-# Using SendGrid for reliable, scalable email delivery
+# --- EMAIL CONFIGURATION ---
+# SendGrid is primary. SMTP is a fallback when SENDGRID_API_KEY is not set.
 EMAIL_BACKEND = 'cases.sendgrid_backend.SendGridEmailBackend'
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
+
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "30"))
 
 # Email retry configuration for resilience
 EMAIL_SEND_RETRIES = int(os.getenv("EMAIL_SEND_RETRIES", "3"))
 EMAIL_RETRY_DELAY_SECONDS = float(os.getenv("EMAIL_RETRY_DELAY_SECONDS", "2"))
 SENDGRID_MAX_RETRIES = int(os.getenv("SENDGRID_MAX_RETRIES", "3"))
 
-# Default sender email - ensure this is a verified SendGrid sender
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@mishra-consultancy.com")
+# Default sender email - must be verified in SendGrid or match SMTP sender.
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "noreply@mishra-consultancy.com")
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", os.getenv("REDIS_URL", "redis://localhost:6379/0"))
