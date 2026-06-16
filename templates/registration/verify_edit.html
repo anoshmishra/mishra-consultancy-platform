@@ -6,7 +6,8 @@
             <div class="card border-0 shadow-lg rounded-4 p-4 text-center">
                 <i class="fas fa-user-lock fa-3x text-warning mb-3"></i>
                 <h3 class="fw-bold">Security Verification</h3>
-                <p class="text-muted">We've sent a 6-digit security code to your current registered email. Enter it below to unlock profile editing.</p>
+                <p class="text-muted mb-2">We've sent a 6-digit security code to your current registered email. Enter it below to unlock profile editing.</p>
+                <p class="small text-muted">If it is not in your inbox, please check Spam, Junk, Promotions, or Updates.</p>
                 <form method="post">
                     {% csrf_token %}
                     <input type="text" name="otp" class="form-control form-control-lg text-center fw-bold mb-4" placeholder="000000" maxlength="6" required>

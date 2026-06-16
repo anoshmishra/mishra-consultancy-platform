@@ -36,6 +36,16 @@ def build_registration_otp_message(otp):
     )
 
 
+def send_registration_otp(profile, email):
+    otp = profile.generate_otp()
+    return send_mail_with_retry(
+        "Verification Code - Mishra Consultancy",
+        build_registration_otp_message(otp),
+        [email],
+        fail_silently=False,
+    )
+
+
 def send_mail_with_retry(subject, message, recipient_list, fail_silently=False):
     """
     Send email via SendGrid with built-in retry logic
@@ -137,11 +147,25 @@ class HomeView(TemplateView):
 def register_view(request):
     if request.method == "POST":
         full_name = request.POST.get('full_name')
-        email = request.POST.get('email')
+        email = request.POST.get('email', '').strip().lower()
         password = request.POST.get('password')
         phone = request.POST.get('phone')
 
-        if User.objects.filter(username=email).exists():
+        existing_user = User.objects.filter(username=email).first()
+        if existing_user and not existing_user.is_active:
+            request.session['verification_email'] = existing_user.email or existing_user.username
+            try:
+                sent = send_registration_otp(existing_user.profile, request.session['verification_email'])
+                if sent:
+                    messages.info(request, "A fresh OTP has been sent. Please check your inbox, spam, junk, promotions, or updates folder.")
+                else:
+                    messages.warning(request, "Your account is pending verification, but we could not send a fresh OTP right now. Please use Resend OTP after a minute.")
+            except Exception as e:
+                logger.error("Registration OTP resend failed: %s", e)
+                messages.warning(request, "Your account is pending verification, but we could not send a fresh OTP right now. Please use Resend OTP after a minute.")
+            return redirect("cases:verify_otp")
+
+        if existing_user:
             messages.error(request, "This email is already registered.")
             return redirect("cases:register")
 
@@ -150,22 +174,19 @@ def register_view(request):
         user.save()
 
         profile = UserProfile.objects.create(user=user, phone=phone)
-        otp = profile.generate_otp()
         
         try:
-            queue_mail_or_fallback(
-                "Verification Code - Mishra Consultancy",
-                build_registration_otp_message(otp),
-                [email],
-                fail_silently=False,
-            )
+            sent = send_registration_otp(profile, email)
             request.session['verification_email'] = email
-            messages.info(request, "OTP sent! Please check your email.")
+            if sent:
+                messages.info(request, "OTP sent. Please check your inbox, spam, junk, promotions, or updates folder.")
+            else:
+                messages.warning(request, "Registration is saved, but the OTP email could not be sent right now. Please use Resend OTP after a minute.")
             return redirect("cases:verify_otp")
         except Exception as e:
-            logger.error(f"Registration SMTP Error: {e}")
+            logger.error(f"Registration OTP SMTP Error: {e}")
             request.session['verification_email'] = email
-            messages.warning(request, "Registration successful, but email service timed out. Please try verifying later.")
+            messages.warning(request, "Registration is saved, but the OTP email service is busy. Please use Resend OTP after a minute and check spam or junk folders.")
             return redirect("cases:verify_otp")
             
     return render(request, "registration/register.html")
@@ -198,6 +219,7 @@ def verify_otp_view(request):
                 pass
 
             messages.success(request, "Account verified! Please login.")
+            request.session.pop('verification_email', None)
             return redirect("cases:login")
         except UserProfile.DoesNotExist:
             messages.error(request, "Invalid OTP.")
@@ -217,18 +239,15 @@ def resend_otp_view(request):
         messages.error(request, "Account not found. Please register again.")
         return redirect("cases:register")
 
-    otp = profile.generate_otp()
     try:
-        queue_mail_or_fallback(
-            "Verification Code - Mishra Consultancy",
-            build_registration_otp_message(otp),
-            [email],
-            fail_silently=False,
-        )
-        messages.info(request, "A new OTP has been sent to your email.")
+        sent = send_registration_otp(profile, email)
+        if sent:
+            messages.info(request, "A new OTP has been sent. Please check your inbox, spam, junk, promotions, or updates folder.")
+        else:
+            messages.warning(request, "We could not send a new OTP right now. Please try again after a minute.")
     except Exception as e:
         logger.error("Resend OTP SMTP Error: %s", e)
-        messages.warning(request, "Email service is busy. Please try resend after a minute.")
+        messages.warning(request, "Email service is busy. Please try Resend OTP after a minute.")
 
     return redirect("cases:verify_otp")
 
@@ -242,9 +261,15 @@ def login_view(request):
                 auth_login(request, user)
                 return redirect("cases:home")
             else:
+                request.session['verification_email'] = user.email or user.username
                 messages.warning(request, "Please verify your email.")
                 return redirect("cases:verify_otp")
         else:
+            inactive_user = User.objects.filter(username=email, is_active=False).first()
+            if inactive_user and inactive_user.check_password(password):
+                request.session['verification_email'] = inactive_user.email or inactive_user.username
+                messages.warning(request, "Please verify your email.")
+                return redirect("cases:verify_otp")
             messages.error(request, "Invalid email or password.")
     return render(request, "registration/login.html")
 
@@ -308,8 +333,11 @@ def request_profile_edit(request):
     profile = request.user.profile
     otp = profile.generate_otp()
     try:
-        queue_mail_or_fallback("Profile Change Code", f"Code: {otp}", [request.user.email], fail_silently=False)
-        messages.info(request, "Code sent to current email.")
+        sent = send_mail_with_retry("Profile Change Code", f"Code: {otp}", [request.user.email], fail_silently=False)
+        if sent:
+            messages.info(request, "Security code sent. Please check your inbox, spam, junk, promotions, or updates folder.")
+        else:
+            messages.warning(request, "We could not send the security code right now. Please try again after a minute.")
         return redirect('cases:verify_edit_otp')
     except Exception as e:
         logger.error(f"Edit OTP SMTP Error: {e}")
