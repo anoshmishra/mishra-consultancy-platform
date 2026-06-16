@@ -9,8 +9,28 @@ try:
 except ImportError:
     BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def env_value(name, default=""):
+    value = os.getenv(name)
+    if value is None:
+        for key, env_item in os.environ.items():
+            if key.strip() == name:
+                value = env_item
+                break
+    if value is None:
+        return default
+
+    value = str(value).strip().strip('"').strip("'")
+    if value.startswith("export "):
+        value = value.replace("export ", "", 1).strip()
+    prefix = f"{name}="
+    if value.startswith(prefix):
+        value = value.replace(prefix, "", 1).strip().strip('"').strip("'")
+    return value
+
+
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-&r^qatb7=!fk#yp88i3y^j_&^w3wee#k9u=hb^ake+^ywu9n0j")
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = env_value("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = ['*']
 
@@ -21,7 +41,7 @@ CSRF_TRUSTED_ORIGINS = [
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
+SECURE_SSL_REDIRECT = env_value("SECURE_SSL_REDIRECT", "False") == "True"
 
 INSTALLED_APPS = [
     'jazzmin',
@@ -104,23 +124,23 @@ LOGOUT_REDIRECT_URL = 'cases:home'
 # --- EMAIL CONFIGURATION ---
 # SendGrid is primary. SMTP is a fallback when SENDGRID_API_KEY is not set.
 EMAIL_BACKEND = 'cases.sendgrid_backend.SendGridEmailBackend'
-SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
+SENDGRID_API_KEY = env_value('SENDGRID_API_KEY', '')
 
-EMAIL_HOST = os.getenv("EMAIL_HOST", "")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "30"))
+EMAIL_HOST = env_value("EMAIL_HOST", "")
+EMAIL_PORT = int(env_value("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = env_value("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_USE_SSL = env_value("EMAIL_USE_SSL", "False").lower() == "true"
+EMAIL_HOST_USER = env_value("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = env_value("EMAIL_HOST_PASSWORD", "")
+EMAIL_TIMEOUT = int(env_value("EMAIL_TIMEOUT", "30"))
 
 # Email retry configuration for resilience
-EMAIL_SEND_RETRIES = int(os.getenv("EMAIL_SEND_RETRIES", "3"))
-EMAIL_RETRY_DELAY_SECONDS = float(os.getenv("EMAIL_RETRY_DELAY_SECONDS", "2"))
-SENDGRID_MAX_RETRIES = int(os.getenv("SENDGRID_MAX_RETRIES", "3"))
+EMAIL_SEND_RETRIES = int(env_value("EMAIL_SEND_RETRIES", "3"))
+EMAIL_RETRY_DELAY_SECONDS = float(env_value("EMAIL_RETRY_DELAY_SECONDS", "2"))
+SENDGRID_MAX_RETRIES = int(env_value("SENDGRID_MAX_RETRIES", "3"))
 
 # Default sender email - must be verified in SendGrid or match SMTP sender.
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "noreply@mishra-consultancy.com")
+DEFAULT_FROM_EMAIL = env_value("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "noreply@mishra-consultancy.com")
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", os.getenv("REDIS_URL", "redis://localhost:6379/0"))

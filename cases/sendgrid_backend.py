@@ -18,6 +18,20 @@ import base64
 logger = logging.getLogger(__name__)
 
 
+def sendgrid_error_detail(error) -> str:
+    body = getattr(error, "body", None)
+    if isinstance(body, bytes):
+        body = body.decode("utf-8", errors="replace")
+    status_code = getattr(error, "status_code", None)
+
+    details = str(error)
+    if status_code:
+        details = f"{details} (status {status_code})"
+    if body:
+        details = f"{details}; body: {body}"
+    return details
+
+
 def smtp_is_configured() -> bool:
     return all([
         getattr(settings, 'EMAIL_HOST', ''),
@@ -104,7 +118,7 @@ class SendGridEmailBackend(BaseEmailBackend):
                 except Exception as retry_error:
                     logger.warning(
                         f"Attempt {attempt}/{self.max_retries} failed for {message.to}: "
-                        f"{str(retry_error)}"
+                        f"{sendgrid_error_detail(retry_error)}"
                     )
                     if attempt < self.max_retries:
                         continue
@@ -113,7 +127,7 @@ class SendGridEmailBackend(BaseEmailBackend):
             return False
 
         except Exception as e:
-            logger.error(f"Failed to send email to {message.to}: {str(e)}")
+            logger.error(f"Failed to send email to {message.to}: {sendgrid_error_detail(e)}")
             if not self.fail_silently:
                 raise
             return False
@@ -126,13 +140,17 @@ class SendGridEmailBackend(BaseEmailBackend):
         from_email = message.from_email or settings.DEFAULT_FROM_EMAIL
         from_name = getattr(message, 'from_name', None)
         
+        content_subtype = getattr(message, 'content_subtype', 'plain')
+        is_html = content_subtype == 'html'
+        body = message.body or " "
+
         # Create Mail object with proper initialization
         mail = Mail(
             from_email=Email(from_email, from_name),
             to_emails=[To(email=recipient) for recipient in message.to if isinstance(recipient, str) and recipient.strip()],
             subject=message.subject,
-            plain_text_content=message.body if message.content_subtype == 'text' else None,
-            html_content=message.body if message.content_subtype == 'html' else None
+            plain_text_content=None if is_html else body,
+            html_content=body if is_html else None
         )
         
         # Add CC recipients
@@ -279,7 +297,7 @@ def send_sendgrid_email(subject: str, message: str, recipient_list: List[str],
         return result > 0
         
     except Exception as e:
-        logger.error(f"SendGrid email sending failed: {str(e)}")
+        logger.error(f"SendGrid email sending failed: {sendgrid_error_detail(e)}")
         if not fail_silently:
             raise
         return False
@@ -330,7 +348,7 @@ def send_sendgrid_email_with_retry(subject: str, message: str, recipient_list: L
         except Exception as e:
             last_error = e
             logger.warning(
-                f"Attempt {attempt}/{retries} to send email failed: {str(e)}"
+                f"Attempt {attempt}/{retries} to send email failed: {sendgrid_error_detail(e)}"
             )
             
             if attempt < retries:
