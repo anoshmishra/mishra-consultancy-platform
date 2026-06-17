@@ -1,8 +1,10 @@
 from unittest.mock import patch
 
 from django.core.exceptions import ImproperlyConfigured
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
+from django.urls import reverse
 
+from .models import Inquiry
 from .sendgrid_backend import send_sendgrid_email_with_retry, validate_sendgrid_sender
 
 
@@ -47,3 +49,37 @@ class SendGridConfigurationTests(SimpleTestCase):
         self.assertFalse(sent)
         self.assertEqual(mocked_send.call_count, 1)
         mocked_sleep.assert_not_called()
+
+
+class InquirySubmissionTests(TestCase):
+    def test_homepage_inquiry_is_saved_when_admin_email_fails(self):
+        with patch("cases.views.queue_mail_or_fallback", side_effect=RuntimeError("mail down")):
+            response = self.client.post(
+                reverse("cases:home"),
+                {
+                    "full_name": "Anosh Mishra",
+                    "phone": "8984454339",
+                    "client_email": "lead@example.com",
+                    "subject": "TAX",
+                },
+            )
+
+        self.assertRedirects(response, reverse("cases:home"))
+        inquiry = Inquiry.objects.get(email="lead@example.com")
+        self.assertEqual(inquiry.full_name, "Anosh Mishra")
+        self.assertEqual(inquiry.subject, "TAX")
+        self.assertEqual(inquiry.status, "NEW")
+
+    def test_homepage_inquiry_rejects_invalid_email(self):
+        response = self.client.post(
+            reverse("cases:home"),
+            {
+                "full_name": "Bad Lead",
+                "phone": "8984454339",
+                "client_email": "not-an-email",
+                "subject": "TAX",
+            },
+        )
+
+        self.assertRedirects(response, reverse("cases:home"))
+        self.assertFalse(Inquiry.objects.filter(full_name="Bad Lead").exists())

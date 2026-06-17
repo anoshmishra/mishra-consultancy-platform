@@ -12,6 +12,8 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 from .models import Client, Case, Lawyer, UserProfile, Inquiry, ServiceRequest
 from .forms import (
@@ -119,33 +121,56 @@ class HomeView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        full_name = request.POST.get('full_name')
-        phone = request.POST.get('phone')
-        client_email = request.POST.get('client_email')
-        service_subject = request.POST.get('subject')
+        full_name = request.POST.get('full_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        client_email = request.POST.get('client_email', '').strip().lower()
+        service_subject = request.POST.get('subject', '').strip()
+
+        service_labels = dict(Inquiry.SERVICE_CHOICES)
+        if not service_subject:
+            service_subject = "GENERAL"
+
+        if not full_name or not phone or not client_email:
+            messages.error(request, "Please fill all inquiry fields before submitting.")
+            return redirect("cases:home")
 
         try:
-            Inquiry.objects.create(
+            validate_email(client_email)
+        except ValidationError:
+            messages.error(request, "Please enter a valid email address.")
+            return redirect("cases:home")
+
+        try:
+            inquiry = Inquiry.objects.create(
                 full_name=full_name, phone=phone, 
                 email=client_email, subject=service_subject
             )
         except Exception as e:
             logger.error(f"Inquiry Database Error: {e}")
+            messages.error(request, "We could not register your inquiry right now. Please try again.")
+            return redirect("cases:home")
 
-        email_body = f"New Inquiry from {full_name}\nPhone: {phone}\nEmail: {client_email}\nSubject: {service_subject}"
+        service_name = service_labels.get(service_subject, service_subject)
+        email_body = (
+            f"New Inquiry #{inquiry.id}\n"
+            f"Name: {full_name}\n"
+            f"Phone: {phone}\n"
+            f"Email: {client_email}\n"
+            f"Service: {service_name}\n"
+            f"Admin: /admin/cases/inquiry/{inquiry.id}/change/"
+        )
 
         try:
             queue_mail_or_fallback(
-                subject=f"NEW INQUIRY: {service_subject}",
+                subject=f"NEW INQUIRY: {service_name}",
                 message=email_body,
                 recipient_list=admin_notification_recipients(),
-                fail_silently=False,
+                fail_silently=True,
             )
-            messages.success(request, f"Thank you {full_name}! Inquiry received.")
         except Exception as e:
-            logger.error(f"SMTP Timeout/Error: {e}")
-            messages.success(request, f"Thank you {full_name}! Your request is registered.")
+            logger.error("Inquiry saved but admin notification failed: %s", e)
 
+        messages.success(request, f"Thank you {full_name}! Your inquiry has been registered.")
         return redirect("cases:home")
 
 def register_view(request):

@@ -80,11 +80,18 @@ class Inquiry(models.Model):
         ('CONVERTED', 'Converted to Client'),
         ('REJECTED', 'Spam/Rejected'),
     )
+    SERVICE_CHOICES = (
+        ('TAX', 'Taxation (GST / Income Tax)'),
+        ('LICENSE', 'Contractor License / E-Tenders'),
+        ('CRIMINAL', 'Criminal Law / Litigation'),
+        ('NOTARY', 'Notary / Legal Drafting'),
+        ('GENERAL', 'General Inquiry'),
+    )
 
     full_name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=15)
-    subject = models.CharField(max_length=100)
+    subject = models.CharField(max_length=100, choices=SERVICE_CHOICES, default='GENERAL')
     message = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='NEW')
     created_at = models.DateTimeField(auto_now_add=True)

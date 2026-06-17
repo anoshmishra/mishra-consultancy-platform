@@ -225,7 +225,7 @@ class CaseAdmin(admin.ModelAdmin):
 @admin.register(Inquiry)
 class InquiryAdmin(admin.ModelAdmin):
     """Lead Management Dashboard for Home Page Consultation requests."""
-    list_display = ('full_name', 'email', 'phone', 'subject', 'status', 'status_color_indicator', 'created_at')
+    list_display = ('full_name', 'email', 'phone', 'service_required', 'status', 'status_color_indicator', 'created_at')
     list_editable = ('status',)
     list_filter = ('status', 'subject', 'created_at')
     search_fields = ('full_name', 'phone', 'subject', 'email')
@@ -236,6 +236,10 @@ class InquiryAdmin(admin.ModelAdmin):
         color = {"NEW": "blue", "CONTACTED": "orange", "CONVERTED": "green", "REJECTED": "red"}
         return mark_safe(f'<b style="color:{color.get(obj.status, "black")}; font-size:18px;">●</b>')
     status_color_indicator.short_description = "Visual Status"
+
+    def service_required(self, obj):
+        return obj.get_subject_display()
+    service_required.short_description = "Service Required"
 
     def save_model(self, request, obj, form, change):
         """Standard save trigger for individual edits or list edits."""
@@ -282,7 +286,13 @@ class InquiryAdmin(admin.ModelAdmin):
                 f"Mishra Consultancy Ltd."
             )
             try:
-                send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [inquiry.email], fail_silently=False)
+                send_sendgrid_email_with_retry(
+                    subject=subject,
+                    message=body,
+                    recipient_list=[inquiry.email],
+                    fail_silently=False,
+                    max_retries=1,
+                )
                 count += 1
             except Exception as e:
                 self.message_user(request, f"SMTP ERROR for {inquiry.full_name}: {str(e)}", messages.ERROR)
