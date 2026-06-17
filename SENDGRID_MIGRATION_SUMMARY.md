@@ -139,7 +139,9 @@ SENDGRID_API_KEY=SG.your_actual_api_key_here
 EMAIL_SEND_RETRIES=3                    # Default: 3
 EMAIL_RETRY_DELAY_SECONDS=2             # Default: 2
 SENDGRID_MAX_RETRIES=3                  # Default: 3
-DEFAULT_FROM_EMAIL=noreply@...          # Default: noreply@mishra-consultancy.com
+DEFAULT_FROM_EMAIL=your-verified-sendgrid-sender@example.com
+SENDGRID_FROM_EMAIL=your-verified-sendgrid-sender@example.com
+SENDGRID_FROM_NAME=Mishra Consultancy
 ```
 
 ### Settings Updated:

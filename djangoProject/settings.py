@@ -140,7 +140,11 @@ EMAIL_RETRY_DELAY_SECONDS = float(env_value("EMAIL_RETRY_DELAY_SECONDS", "2"))
 SENDGRID_MAX_RETRIES = int(env_value("SENDGRID_MAX_RETRIES", "3"))
 
 # Default sender email - must be verified in SendGrid or match SMTP sender.
-DEFAULT_FROM_EMAIL = env_value("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "noreply@mishra-consultancy.com")
+# Prefer an explicit SendGrid sender alias so Render env vars can stay obvious.
+SENDGRID_FROM_EMAIL = env_value("SENDGRID_FROM_EMAIL", "")
+SENDGRID_FROM_NAME = env_value("SENDGRID_FROM_NAME", "Mishra Consultancy")
+DEFAULT_FROM_EMAIL = env_value("DEFAULT_FROM_EMAIL", SENDGRID_FROM_EMAIL or EMAIL_HOST_USER or "")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL or "webmaster@localhost"
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", os.getenv("REDIS_URL", "redis://localhost:6379/0"))
@@ -151,10 +155,13 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False") == "True"
 
+ADMIN_EMAIL_1 = env_value("ADMIN_EMAIL_1", "anoshmishra77@gmail.com")
+ADMIN_EMAIL_2 = env_value("ADMIN_EMAIL_2", "mishraconsultancy96@gmail.com")
 ADMINS = [
-    ('Anosh', 'anoshmishra77@gmail.com'),
-    ('Consultancy', 'mishraconsultancy96@gmail.com'),
+    ('Anosh', ADMIN_EMAIL_1),
+    ('Consultancy', ADMIN_EMAIL_2),
 ]
+ADMIN_NOTIFICATION_EMAILS = [email for _, email in ADMINS if email]
 
 JAZZMIN_SETTINGS = {
     "site_title": "Mishra Consultancy",

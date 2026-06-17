@@ -60,6 +60,10 @@ def send_mail_with_retry(subject, message, recipient_list, fail_silently=False):
     )
 
 
+def admin_notification_recipients():
+    return getattr(settings, "ADMIN_NOTIFICATION_EMAILS", ["anoshmishra77@gmail.com"])
+
+
 def queue_mail_or_fallback(subject, message, recipient_list, fail_silently=False,
                           html_message=None, from_email=None, attachments=None):
     """
@@ -134,7 +138,7 @@ class HomeView(TemplateView):
             queue_mail_or_fallback(
                 subject=f"NEW INQUIRY: {service_subject}",
                 message=email_body,
-                recipient_list=[settings.DEFAULT_FROM_EMAIL, 'anoshmishra77@gmail.com'],
+                recipient_list=admin_notification_recipients(),
                 fail_silently=False,
             )
             messages.success(request, f"Thank you {full_name}! Inquiry received.")
@@ -319,7 +323,7 @@ def start_filing_view(request):
             queue_mail_or_fallback(
                 f"Job Request: {request.user.profile.unique_id}",
                 admin_msg,
-                [settings.DEFAULT_FROM_EMAIL, 'anoshmishra77@gmail.com'],
+                admin_notification_recipients(),
                 fail_silently=False,
             )
             messages.success(request, "Request submitted!")

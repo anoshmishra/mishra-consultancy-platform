@@ -28,7 +28,7 @@ echo "SENDGRID_API_KEY=SG.your_key_here" > .env
 - Login to SendGrid Dashboard
 - Go to: Settings > Sender Authentication
 - Verify your domain OR add sender email
-- Example: `noreply@mishra-consultancy.com`
+- Example: `support@your-verified-domain.com`
 
 ### 5. Test It Works
 ```bash
@@ -107,11 +107,13 @@ send_sendgrid_email_with_retry(
 # REQUIRED
 SENDGRID_API_KEY=SG.your_actual_key_here
 
-# OPTIONAL (defaults shown)
+# OPTIONAL
 EMAIL_SEND_RETRIES=3
 EMAIL_RETRY_DELAY_SECONDS=2
 SENDGRID_MAX_RETRIES=3
-DEFAULT_FROM_EMAIL=noreply@mishra-consultancy.com
+DEFAULT_FROM_EMAIL=your-verified-sendgrid-sender@example.com
+SENDGRID_FROM_EMAIL=your-verified-sendgrid-sender@example.com
+SENDGRID_FROM_NAME=Mishra Consultancy
 ```
 
 ### Settings in Django
@@ -120,7 +122,8 @@ File: `djangoProject/settings.py`
 ```python
 EMAIL_BACKEND = 'cases.sendgrid_backend.SendGridEmailBackend'
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@...')
+SENDGRID_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', SENDGRID_FROM_EMAIL)
 ```
 
 ---

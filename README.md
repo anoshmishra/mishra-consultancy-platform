@@ -59,6 +59,9 @@ By digitizing the manual "Consultancy-to-Client" pipeline, this system reduces o
 OTP Email Variables (Production)
 - Set either `SENDGRID_API_KEY` or the SMTP variables below on Render. Without one of these providers, OTP email cannot be delivered.
 - `SENDGRID_API_KEY=your-sendgrid-api-key`
+- `DEFAULT_FROM_EMAIL=your-verified-sendgrid-sender@example.com`
+- `SENDGRID_FROM_EMAIL=your-verified-sendgrid-sender@example.com`
+- `SENDGRID_FROM_NAME=Mishra Consultancy`
 - `EMAIL_HOST=smtp.gmail.com`
 - `EMAIL_PORT=587`
 - `EMAIL_USE_TLS=True`
@@ -68,7 +71,11 @@ OTP Email Variables (Production)
 - `EMAIL_RETRY_DELAY_SECONDS=2`
 - `EMAIL_HOST_USER=your-gmail@gmail.com`
 - `EMAIL_HOST_PASSWORD=your-16-char-app-password`
-- `DEFAULT_FROM_EMAIL=your-gmail@gmail.com`
+
+SendGrid Sender Fix
+- The Render log `The from address does not match a verified Sender Identity` means SendGrid accepted the API key but rejected the sender address.
+- In Render, set `DEFAULT_FROM_EMAIL` or `SENDGRID_FROM_EMAIL` to the exact email verified in SendGrid under Sender Authentication. Do not use the old fallback `noreply@mishra-consultancy.com` unless that address/domain is verified.
+- After updating the environment variable, redeploy or restart the Render service.
 
 Celery Queue Variables (Production)
 - `REDIS_URL=your-render-redis-internal-url`

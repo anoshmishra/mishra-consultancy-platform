@@ -3,19 +3,27 @@ SendGrid Email Backend for Django
 Provides a robust email sending solution with retry logic and comprehensive error handling.
 """
 import logging
-import json
 from typing import List, Optional, Dict, Any
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.mail.backends.smtp import EmailBackend as SMTPEmailBackend
 from django.core.mail.backends.base import BaseEmailBackend
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import (
-    Mail, Email, To, Content, Attachment, FileContent, 
-    FileName, FileType, Disposition, ContentId, Header
+    Mail, Email, To, Attachment, FileContent,
+    FileName, FileType, Disposition, Header
 )
 import base64
 
 logger = logging.getLogger(__name__)
+
+
+PLACEHOLDER_FROM_EMAILS = {
+    "",
+    "noreply@mishra-consultancy.com",
+    "your-verified-sendgrid-sender@example.com",
+    "webmaster@localhost",
+}
 
 
 def sendgrid_error_detail(error) -> str:
@@ -30,6 +38,44 @@ def sendgrid_error_detail(error) -> str:
     if body:
         details = f"{details}; body: {body}"
     return details
+
+
+def sendgrid_status_code(error):
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        return None
+    try:
+        return int(status_code)
+    except (TypeError, ValueError):
+        return None
+
+
+def sendgrid_error_is_retryable(error) -> bool:
+    status_code = sendgrid_status_code(error)
+    if status_code is None:
+        return not isinstance(error, ImproperlyConfigured)
+
+    if status_code == 429 or status_code >= 500:
+        return True
+
+    return False
+
+
+def validate_sendgrid_sender(from_email: Optional[str] = None) -> str:
+    sender = (from_email or getattr(settings, "DEFAULT_FROM_EMAIL", "") or "").strip()
+    normalized = sender.lower()
+
+    if not getattr(settings, "SENDGRID_API_KEY", ""):
+        return sender
+
+    if normalized in PLACEHOLDER_FROM_EMAILS or normalized.endswith("@example.com"):
+        raise ImproperlyConfigured(
+            "SendGrid is enabled, but DEFAULT_FROM_EMAIL is not a verified sender. "
+            "Set DEFAULT_FROM_EMAIL or SENDGRID_FROM_EMAIL on Render to the exact "
+            "email/domain verified in SendGrid Sender Authentication."
+        )
+
+    return sender
 
 
 def smtp_is_configured() -> bool:
@@ -120,6 +166,8 @@ class SendGridEmailBackend(BaseEmailBackend):
                         f"Attempt {attempt}/{self.max_retries} failed for {message.to}: "
                         f"{sendgrid_error_detail(retry_error)}"
                     )
+                    if not sendgrid_error_is_retryable(retry_error):
+                        raise retry_error
                     if attempt < self.max_retries:
                         continue
                     raise retry_error
@@ -137,8 +185,8 @@ class SendGridEmailBackend(BaseEmailBackend):
         Convert Django EmailMessage to SendGrid Mail object
         """
         # Parse from email
-        from_email = message.from_email or settings.DEFAULT_FROM_EMAIL
-        from_name = getattr(message, 'from_name', None)
+        from_email = validate_sendgrid_sender(message.from_email or settings.DEFAULT_FROM_EMAIL)
+        from_name = getattr(message, 'from_name', None) or getattr(settings, 'SENDGRID_FROM_NAME', None)
         
         content_subtype = getattr(message, 'content_subtype', 'plain')
         is_html = content_subtype == 'html'
@@ -250,11 +298,13 @@ def send_sendgrid_email(subject: str, message: str, recipient_list: List[str],
     from django.core.mail import EmailMessage
     
     try:
+        sender = validate_sendgrid_sender(from_email or settings.DEFAULT_FROM_EMAIL)
+
         # Create EmailMessage object
         email_msg = EmailMessage(
             subject=subject,
             body=html_message or message,
-            from_email=from_email or settings.DEFAULT_FROM_EMAIL,
+            from_email=sender,
             to=recipient_list,
             cc=cc or [],
             bcc=bcc or [],
@@ -277,6 +327,7 @@ def send_sendgrid_email(subject: str, message: str, recipient_list: List[str],
         
         if getattr(settings, 'SENDGRID_API_KEY', ''):
             backend = SendGridEmailBackend(fail_silently=fail_silently)
+            backend.max_retries = max(1, int(max_retries))
         elif smtp_is_configured():
             logger.warning("SENDGRID_API_KEY not configured. Sending email via SMTP fallback.")
             backend = SMTPEmailBackend(
@@ -328,8 +379,10 @@ def send_sendgrid_email_with_retry(subject: str, message: str, recipient_list: L
     retries = max_retries or getattr(settings, 'EMAIL_SEND_RETRIES', 3)
     retry_delay = float(getattr(settings, 'EMAIL_RETRY_DELAY_SECONDS', 2))
     last_error = None
+    attempts_made = 0
     
     for attempt in range(1, retries + 1):
+        attempts_made = attempt
         try:
             success = send_sendgrid_email(
                 subject=subject,
@@ -339,6 +392,7 @@ def send_sendgrid_email_with_retry(subject: str, message: str, recipient_list: L
                 html_message=html_message,
                 from_email=from_email,
                 attachments=attachments,
+                max_retries=1,
             )
             
             if success:
@@ -350,6 +404,9 @@ def send_sendgrid_email_with_retry(subject: str, message: str, recipient_list: L
             logger.warning(
                 f"Attempt {attempt}/{retries} to send email failed: {sendgrid_error_detail(e)}"
             )
+            if not sendgrid_error_is_retryable(e):
+                logger.error("Email send failed with a non-retryable provider error.")
+                break
             
             if attempt < retries:
                 time.sleep(retry_delay * attempt)
@@ -358,5 +415,5 @@ def send_sendgrid_email_with_retry(subject: str, message: str, recipient_list: L
     if last_error and not fail_silently:
         raise last_error
     
-    logger.error(f"Failed to send email after {retries} attempts")
+    logger.error(f"Failed to send email after {attempts_made} attempt(s)")
     return False

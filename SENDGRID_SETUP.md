@@ -32,8 +32,10 @@ EMAIL_SEND_RETRIES=3
 EMAIL_RETRY_DELAY_SECONDS=2
 SENDGRID_MAX_RETRIES=3
 
-# Optional: Override sender email (must be verified in SendGrid)
-DEFAULT_FROM_EMAIL=noreply@mishra-consultancy.com
+# Required when using SendGrid: must exactly match a verified sender identity
+DEFAULT_FROM_EMAIL=your-verified-sendgrid-sender@example.com
+SENDGRID_FROM_EMAIL=your-verified-sendgrid-sender@example.com
+SENDGRID_FROM_NAME=Mishra Consultancy
 
 # Other Django settings
 SECRET_KEY=your-secret-key-here
@@ -47,6 +49,7 @@ For production deployment on Render or Heroku:
 1. Go to your deployment dashboard
 2. Navigate to "Environment Variables" or "Config Vars"
 3. Add: `SENDGRID_API_KEY` = `SG.your_actual_api_key_here`
+4. Add: `DEFAULT_FROM_EMAIL` or `SENDGRID_FROM_EMAIL` = your verified SendGrid sender email
 
 ---
 
@@ -59,7 +62,7 @@ Before sending emails, you must verify your sender email address in SendGrid:
 3. Add and verify your sender domain (e.g., `mishra-consultancy.com`)
 4. Or add specific sender emails
 
-**Important:** The `DEFAULT_FROM_EMAIL` in your settings must be a verified sender.
+**Important:** The `DEFAULT_FROM_EMAIL` or `SENDGRID_FROM_EMAIL` in Render must be a verified sender. If SendGrid logs `The from address does not match a verified Sender Identity`, the API key is working but the sender email is wrong or unverified.
 
 ---
 
