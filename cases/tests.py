@@ -52,8 +52,8 @@ class SendGridConfigurationTests(SimpleTestCase):
 
 
 class InquirySubmissionTests(TestCase):
-    def test_homepage_inquiry_is_saved_when_admin_email_fails(self):
-        with patch("cases.views.queue_mail_or_fallback", side_effect=RuntimeError("mail down")):
+    def test_homepage_inquiry_saves_and_emails_client_and_admins(self):
+        with patch("cases.views.send_immediate_mail", return_value=True) as mocked_mail:
             response = self.client.post(
                 reverse("cases:home"),
                 {
@@ -69,6 +69,32 @@ class InquirySubmissionTests(TestCase):
         self.assertEqual(inquiry.full_name, "Anosh Mishra")
         self.assertEqual(inquiry.subject, "TAX")
         self.assertEqual(inquiry.status, "NEW")
+        self.assertEqual(mocked_mail.call_count, 2)
+
+        client_call = mocked_mail.call_args_list[0].kwargs
+        admin_call = mocked_mail.call_args_list[1].kwargs
+        self.assertEqual(client_call["recipient_list"], ["lead@example.com"])
+        self.assertEqual(client_call["subject"], "Inquiry Registered - Mishra Consultancy")
+        self.assertIn("MC-INQ-", client_call["message"])
+        self.assertIn("Taxation (GST / Income Tax)", client_call["message"])
+        self.assertIn("anoshmishra77@gmail.com", admin_call["recipient_list"])
+        self.assertEqual(admin_call["subject"], "NEW INQUIRY: Taxation (GST / Income Tax)")
+
+    def test_homepage_inquiry_is_saved_when_confirmation_email_fails(self):
+        with patch("cases.views.send_immediate_mail", side_effect=[False, True]) as mocked_mail:
+            response = self.client.post(
+                reverse("cases:home"),
+                {
+                    "full_name": "Anosh Mishra",
+                    "phone": "8984454339",
+                    "client_email": "lead@example.com",
+                    "subject": "TAX",
+                },
+            )
+
+        self.assertRedirects(response, reverse("cases:home"))
+        self.assertTrue(Inquiry.objects.filter(email="lead@example.com").exists())
+        self.assertEqual(mocked_mail.call_count, 2)
 
     def test_homepage_inquiry_rejects_invalid_email(self):
         response = self.client.post(

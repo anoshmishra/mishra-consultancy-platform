@@ -4,7 +4,7 @@ import logging
 import time
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
 from django.conf import settings
@@ -66,12 +66,66 @@ def admin_notification_recipients():
     return getattr(settings, "ADMIN_NOTIFICATION_EMAILS", ["anoshmishra77@gmail.com"])
 
 
+def send_immediate_mail(subject, message, recipient_list, fail_silently=True,
+                        html_message=None, from_email=None, attachments=None):
+    """
+    Send high-priority user-facing emails synchronously.
+    Use this when a user expects the email immediately after a form action.
+    """
+    return send_sendgrid_email_with_retry(
+        subject=subject,
+        message=message,
+        recipient_list=recipient_list,
+        fail_silently=fail_silently,
+        html_message=html_message,
+        from_email=from_email,
+        attachments=attachments,
+        max_retries=1,
+    )
+
+
+def build_inquiry_client_confirmation_message(inquiry):
+    return (
+        f"Dear {inquiry.full_name},\n\n"
+        "Thank you for contacting Mishra Consultancy.\n\n"
+        f"Your inquiry has been registered successfully.\n"
+        f"Inquiry ID: MC-INQ-{inquiry.id:04d}\n"
+        f"Service Required: {inquiry.get_subject_display()}\n\n"
+        "Our team will review your request and contact you shortly.\n\n"
+        "Regards,\n"
+        "Mishra Consultancy Team"
+    )
+
+
+def build_inquiry_admin_message(inquiry, admin_url):
+    return (
+        f"New Inquiry #{inquiry.id}\n"
+        f"Name: {inquiry.full_name}\n"
+        f"Phone: {inquiry.phone}\n"
+        f"Email: {inquiry.email}\n"
+        f"Service: {inquiry.get_subject_display()}\n"
+        f"Admin: {admin_url}"
+    )
+
+
 def queue_mail_or_fallback(subject, message, recipient_list, fail_silently=False,
                           html_message=None, from_email=None, attachments=None):
     """
     Queue email via Celery, with sync fallback if queue fails
     SendGrid handles all delivery
     """
+    if not getattr(settings, "EMAIL_USE_CELERY", False):
+        logger.info("Sending email synchronously: %s", subject)
+        return send_sendgrid_email_with_retry(
+            subject=subject,
+            message=message,
+            recipient_list=recipient_list,
+            fail_silently=fail_silently,
+            html_message=html_message,
+            from_email=from_email,
+            attachments=attachments
+        )
+
     try:
         from .tasks import send_email_task
         send_email_task.delay(
@@ -151,26 +205,46 @@ class HomeView(TemplateView):
             return redirect("cases:home")
 
         service_name = service_labels.get(service_subject, service_subject)
-        email_body = (
-            f"New Inquiry #{inquiry.id}\n"
-            f"Name: {full_name}\n"
-            f"Phone: {phone}\n"
-            f"Email: {client_email}\n"
-            f"Service: {service_name}\n"
-            f"Admin: /admin/cases/inquiry/{inquiry.id}/change/"
-        )
+        admin_path = reverse("admin:cases_inquiry_change", args=[inquiry.id])
+        admin_url = request.build_absolute_uri(admin_path)
+        admin_email_body = build_inquiry_admin_message(inquiry, admin_url)
+        client_email_body = build_inquiry_client_confirmation_message(inquiry)
+
+        client_mail_sent = False
+        admin_mail_sent = False
 
         try:
-            queue_mail_or_fallback(
+            client_mail_sent = send_immediate_mail(
+                subject="Inquiry Registered - Mishra Consultancy",
+                message=client_email_body,
+                recipient_list=[client_email],
+                fail_silently=True,
+            )
+            if client_mail_sent:
+                logger.info("Inquiry confirmation email sent to %s for inquiry %s", client_email, inquiry.id)
+            else:
+                logger.error("Inquiry saved but client confirmation email was not sent for inquiry %s", inquiry.id)
+        except Exception as e:
+            logger.error("Inquiry saved but client confirmation email failed for inquiry %s: %s", inquiry.id, e)
+
+        try:
+            admin_mail_sent = send_immediate_mail(
                 subject=f"NEW INQUIRY: {service_name}",
-                message=email_body,
+                message=admin_email_body,
                 recipient_list=admin_notification_recipients(),
                 fail_silently=True,
             )
+            if admin_mail_sent:
+                logger.info("Inquiry admin notification email sent for inquiry %s", inquiry.id)
+            else:
+                logger.error("Inquiry saved but admin notification email was not sent for inquiry %s", inquiry.id)
         except Exception as e:
-            logger.error("Inquiry saved but admin notification failed: %s", e)
+            logger.error("Inquiry saved but admin notification failed for inquiry %s: %s", inquiry.id, e)
 
-        messages.success(request, f"Thank you {full_name}! Your inquiry has been registered.")
+        if client_mail_sent:
+            messages.success(request, f"Thank you {full_name}! Your inquiry has been registered and a confirmation email has been sent.")
+        else:
+            messages.warning(request, f"Thank you {full_name}! Your inquiry has been registered. Confirmation email delivery is delayed, so please also check spam or promotions.")
         return redirect("cases:home")
 
 def register_view(request):

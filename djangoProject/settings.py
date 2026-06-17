@@ -154,6 +154,7 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False") == "True"
+EMAIL_USE_CELERY = env_value("EMAIL_USE_CELERY", "False").lower() == "true"
 
 ADMIN_EMAIL_1 = env_value("ADMIN_EMAIL_1", "anoshmishra77@gmail.com")
 ADMIN_EMAIL_2 = env_value("ADMIN_EMAIL_2", "mishraconsultancy96@gmail.com")
