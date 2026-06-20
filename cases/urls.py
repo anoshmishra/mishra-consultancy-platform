@@ -4,6 +4,8 @@ from . import views
 app_name = 'cases'
 
 urlpatterns = [
+    path('media/<path:path>', views.protected_media_view, name='protected_media'),
+
     # --- 1. PUBLIC PAGES ---
     path('', views.HomeView.as_view(), name='home'),
     path('services/', views.services_view, name='services'),

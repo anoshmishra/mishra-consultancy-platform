@@ -1,10 +1,13 @@
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
-from .models import Inquiry
+from .models import Inquiry, UserProfile
 from .sendgrid_backend import send_sendgrid_email_with_retry, validate_sendgrid_sender
 
 
@@ -109,3 +112,45 @@ class InquirySubmissionTests(TestCase):
 
         self.assertRedirects(response, reverse("cases:home"))
         self.assertFalse(Inquiry.objects.filter(full_name="Bad Lead").exists())
+
+
+class ProtectedMediaTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="owner@example.com",
+            email="owner@example.com",
+            password="test-password",
+        )
+        self.profile = UserProfile.objects.create(
+            user=self.user,
+            phone="9999999999",
+        )
+
+    def test_profile_photo_is_served_to_its_owner(self):
+        with tempfile.TemporaryDirectory() as media_root:
+            photo_path = Path(media_root) / "profile_pics" / "avatar.png"
+            photo_path.parent.mkdir(parents=True)
+            photo_path.write_bytes(b"test-image-content")
+            self.profile.profile_pic.name = "profile_pics/avatar.png"
+            self.profile.save(update_fields=["profile_pic"])
+
+            self.client.force_login(self.user)
+            with override_settings(MEDIA_ROOT=Path(media_root)):
+                response = self.client.get("/media/profile_pics/avatar.png")
+
+            self.assertEqual(response.status_code, 200)
+
+    def test_profile_photo_is_not_served_to_another_client(self):
+        other_user = User.objects.create_user(
+            username="other@example.com",
+            email="other@example.com",
+            password="test-password",
+        )
+        UserProfile.objects.create(user=other_user, phone="8888888888")
+        self.profile.profile_pic.name = "profile_pics/avatar.png"
+        self.profile.save(update_fields=["profile_pic"])
+
+        self.client.force_login(other_user)
+        response = self.client.get("/media/profile_pics/avatar.png")
+
+        self.assertEqual(response.status_code, 404)

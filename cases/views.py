@@ -2,7 +2,10 @@ import random
 import datetime
 import logging
 import time
+from pathlib import Path
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404
+from django.views.static import serve
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse, reverse_lazy
 from django.contrib import messages
@@ -23,6 +26,36 @@ from .forms import (
 from .sendgrid_backend import send_sendgrid_email_with_retry
 
 logger = logging.getLogger(__name__)
+
+
+@login_required
+def protected_media_view(request, path):
+    """
+    Serve user uploads in production while keeping legal documents private.
+    Staff can access all uploads; clients can only access their own files.
+    """
+    normalized_path = Path(path).as_posix().lstrip("/")
+    if normalized_path.startswith("../") or "/../" in normalized_path:
+        raise Http404
+
+    if not request.user.is_staff:
+        profile = getattr(request.user, "profile", None)
+        owns_profile_picture = bool(
+            profile
+            and profile.profile_pic
+            and profile.profile_pic.name == normalized_path
+        )
+        owns_case_document = bool(
+            profile
+            and Case.objects.filter(
+                client_profile=profile,
+                document=normalized_path,
+            ).exists()
+        )
+        if not owns_profile_picture and not owns_case_document:
+            raise Http404
+
+    return serve(request, normalized_path, document_root=settings.MEDIA_ROOT)
 
 
 def build_registration_otp_message(otp):

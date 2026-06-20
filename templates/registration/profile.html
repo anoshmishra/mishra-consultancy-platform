@@ -7,8 +7,17 @@
         <div class="col-lg-4 mb-4">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden text-center">
                 <div class="bg-primary py-5">
-                    {% if user.profile.profile_pic %}
-                        <img src="{{ user.profile.profile_pic.url }}" class="rounded-circle border border-4 border-white shadow" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% if user.profile.profile_pic and user.profile.profile_pic.name != "profile_pics/default.png" %}
+                        <img
+                            src="{{ user.profile.profile_pic.url }}"
+                            alt="{{ user.get_full_name|default:user.username }} profile photo"
+                            class="rounded-circle border border-4 border-white shadow"
+                            style="width: 120px; height: 120px; object-fit: cover;"
+                            onerror="this.hidden=true; document.getElementById('profile-photo-fallback').style.display='flex';"
+                        >
+                        <div id="profile-photo-fallback" class="rounded-circle border border-4 border-white shadow bg-light mx-auto align-items-center justify-content-center" style="display: none; width: 120px; height: 120px;">
+                            <i class="fas fa-user fa-3x text-muted"></i>
+                        </div>
                     {% else %}
                         <div class="rounded-circle border border-4 border-white shadow bg-light mx-auto d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
                             <i class="fas fa-user fa-3x text-muted"></i>

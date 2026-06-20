@@ -89,6 +89,11 @@ Render Setup (Required for Background Queue)
 - Ensure worker process is enabled from `Procfile`:
 - `worker: celery -A djangoProject worker --loglevel=info --pool=solo`
 
+Profile Photos and Uploaded Documents on Render
+- Attach a persistent disk to the web service, for example at `/var/data`.
+- Set `MEDIA_ROOT=/var/data/media` in Render Environment.
+- Without a persistent disk, Render's ephemeral filesystem can delete uploaded profile photos and documents during a deploy or restart.
+
 Security Note
 - Never hardcode SMTP credentials in source code.
 - If credentials were previously committed, rotate the Gmail App Password immediately.
